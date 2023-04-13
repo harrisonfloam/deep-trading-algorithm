@@ -18,7 +18,8 @@ from torch.utils.data import DataLoader
 
 class CryptoTrader:
     """
-    A class for creating and training a LSTM-based cryptocurrency trading algorithm. Call train(), then run(), or train_run().
+    A class for creating and training a LSTM-based cryptocurrency trading algorithm. 
+    Initialize, then call train(), then run(), or train_run().
 
     Methods:
         train(self, data, batch_size=32, epochs=10)
