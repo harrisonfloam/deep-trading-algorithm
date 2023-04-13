@@ -6,6 +6,7 @@
 # Import Libraries
 import requests
 import pandas as pd
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -14,10 +15,13 @@ import configparser
 import time
 import cbpro
 import datetime
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+
 
 # Define the Model Class
 class CryptoLSTM(nn.Module):
-    def __init__(self, input_size, indicator_size, hidden_size, output_size):
+    def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
         super(CryptoLSTM, self).__init__()
         # Define the layers
         self.hidden_size = hidden_size
@@ -25,6 +29,10 @@ class CryptoLSTM(nn.Module):
         self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
         self.fc2 = nn.Linear(hidden_size//2 + indicator_size, output_size)  # Fully-connected layer 2
         self.sigmoid = nn.Sigmoid()                                         # Sigmoid activation function
+
+        # Define other parameters
+        self.verbose = verbose  # Verbose debug flag
+
     # Define the forward function
     def forward(self, x, hidden, indicator):
         out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
@@ -33,6 +41,68 @@ class CryptoLSTM(nn.Module):
         out = self.fc2(torch.cat((out, indicator), dim=1))  # Concatenate output of first fully connected layer with indicator data and pass through second fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
         return out, hidden
+    
+    def create_sequences(self, data, seq_length):
+        """
+        Create sequences for training/evaluation
+        """
+        sequences = []
+        targets = []
+
+        # Extract price and indicator data
+        price_data = data[['price']]
+        indicator_data = data.drop(columns=['price'])
+
+        # Iterate over the data to create sequences
+        for i in range(seq_length, len(data)):
+            sequence = price_data[i - seq_length:i]
+            target = data[i:i+1]['price'].values[0]
+
+            # Add indicator values to the sequence
+            indicators = indicator_data[i - seq_length:i].values
+            sequence = np.hstack([sequence.values, indicators])
+
+            sequences.append(sequence)
+            targets.append(target)
+
+        # Convert lists to tensors
+        sequences = torch.tensor(sequences, dtype=torch.float32)
+        targets = torch.tensor(targets, dtype=torch.float32)
+
+        return sequences, targets
+    
+    def train(self, data, batch_size=32, epochs=10, seq_length=10):
+        sequences, labels = self.create_sequences(data=data, seq_length=seq_length)  # Convert training data to sequences and labels
+
+        # Create DataLoader
+        dataset = CryptoDataset(sequences, labels)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+        # Train the model
+        for epoch in range(epochs):
+            running_loss = 0.0
+            for i, data in enumerate(dataloader):
+                inputs, labels = data
+                self.optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, labels)
+                loss.backward()
+                self.optimizer.step()
+                running_loss += loss.item()
+            if self.verbose: print(f'Epoch {epoch+1} loss: {running_loss/len(dataloader):.6f}') # Print if verbose
+
+
+class CryptoDataset(Dataset):
+    def __init__(self, sequences, labels):
+        self.sequences = sequences
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        return self.sequences[index], self.labels[index]
+
 
 class CoinbaseAPI():
     def __init__(self, product_id):
@@ -138,7 +208,7 @@ class CryptoTrader:
     def initialize_model(self):
         indicator_size = len(self.price_data.columns) - 2 # Number of indicator columns
 
-        self.model = CryptoLSTM(input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1) # Model instance
+        self.model = CryptoLSTM(input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
         self.criterion = nn.MSELoss()                                # MSE loss function
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)    # Adam optimizer
 
@@ -152,7 +222,7 @@ class CryptoTrader:
             train_period_delta = pd.Timedelta(train_period, train_period_unit)
         except ValueError:
             train_period_delta = pd.Timedelta(train_period, 'h')
-            raise ValueError(f"Invalid time unit: {train_period_unit}. Expected 'h', or 'd', 'm'. Using 'h'.")
+            raise ValueError(f"Invalid time unit: {train_period_unit}. Expected 'h', 'd', 'w', or 'm'. Using 'm'.")
         
         historical_data = self.coinbase_api.get_historical_data(granularity=self.trade_interval, train_period=train_period_delta)
 
@@ -168,6 +238,7 @@ class CryptoTrader:
         data.reset_index(drop=True, inplace=True)  # Reset the index
 
     # Update the model using the latest price data
+    # TODO: Use create_sequences() here
     def update_model(self):
         input_seq = self.price_data.iloc[-2:-1, 1:].values       # Double check
         target_seq = self.price_data.iloc[-1:, 1].values.reshape(-1, 1)
@@ -256,17 +327,16 @@ class CryptoTrader:
         print(self.order_log.iloc[-1])
 
     # Train the model on historical data
-    def train(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10):
-        # Initialize model
-        # Get historical data
-        self.train_data = self.get_historical_data(granularity=self.trade_interval, 
+    def train(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10, seq_length=10):
+        self.train_data = self.get_historical_data(granularity=self.trade_interval, # Get historical data
                                                    historical_period=historical_period, 
                                                    historical_period_unit=historical_period_unit)
-        # Concat_indicators
-        self.concat_indicators(self.train_data)
-        # Train
-        pass
+        self.concat_indicators(self.train_data) # Concat_indicators
+
+        self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
+
     # Start the live trading loop
+    #TODO: Change all time periods to dates instead of "1 months"
     def run(self):
 
         self.initialize_time()          # Initialize time parameters
@@ -274,7 +344,7 @@ class CryptoTrader:
         balance = self.initial_balance  # Initialize the wallet balance
 
         # Train
-        
+
         # Initialize the current time and end time
         current_time = self.initial_time
         end_time = self.end_time
