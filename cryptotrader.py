@@ -1,7 +1,5 @@
 ## Crypto Trading Algorithm
 # Harrison Floam, 10 April 2023
-# crypto-trading-algorithm
-# test
 
 # Import Libraries
 import requests
@@ -17,148 +15,6 @@ import cbpro
 import datetime
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-
-
-# Define the Model Class
-class CryptoLSTM(nn.Module):
-    def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
-        super(CryptoLSTM, self).__init__()
-        # Define the layers
-        self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)      # LSTM layer
-        self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
-        self.fc2 = nn.Linear(hidden_size//2 + indicator_size, output_size)  # Fully-connected layer 2
-        self.sigmoid = nn.Sigmoid()                                         # Sigmoid activation function
-
-        # Define other parameters
-        self.verbose = verbose  # Verbose debug flag
-
-    # Define the forward function
-    def forward(self, x, hidden, indicator):
-        out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
-        out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
-        out = self.sigmoid(out)                             # Apply sigmoid activation function
-        out = self.fc2(torch.cat((out, indicator), dim=1))  # Concatenate output of first fully connected layer with indicator data and pass through second fully connected layer
-        out = self.sigmoid(out)                             # Apply sigmoid activation function
-        return out, hidden
-    
-    def create_sequences(self, data, seq_length):
-        """
-        Create sequences for training/evaluation
-        """
-        sequences = []
-        targets = []
-
-        # Extract price and indicator data
-        price_data = data[['price']]
-        indicator_data = data.drop(columns=['price'])
-
-        # Iterate over the data to create sequences
-        for i in range(seq_length, len(data)):
-            sequence = price_data[i - seq_length:i]
-            target = data[i:i+1]['price'].values[0]
-
-            # Add indicator values to the sequence
-            indicators = indicator_data[i - seq_length:i].values
-            sequence = np.hstack([sequence.values, indicators])
-
-            sequences.append(sequence)
-            targets.append(target)
-
-        # Convert lists to tensors
-        sequences = torch.tensor(sequences, dtype=torch.float32)
-        targets = torch.tensor(targets, dtype=torch.float32)
-
-        return sequences, targets
-    
-    def train(self, data, batch_size=32, epochs=10, seq_length=10):
-        sequences, labels = self.create_sequences(data=data, seq_length=seq_length)  # Convert training data to sequences and labels
-
-        # Create DataLoader
-        dataset = CryptoDataset(sequences, labels)
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-
-        # Train the model
-        for epoch in range(epochs):
-            running_loss = 0.0
-            for i, data in enumerate(dataloader):
-                inputs, labels = data
-                self.optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
-                loss.backward()
-                self.optimizer.step()
-                running_loss += loss.item()
-            if self.verbose: print(f'Epoch {epoch+1} loss: {running_loss/len(dataloader):.6f}') # Print if verbose
-
-
-class CryptoDataset(Dataset):
-    def __init__(self, sequences, labels):
-        self.sequences = sequences
-        self.labels = labels
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, index):
-        return self.sequences[index], self.labels[index]
-
-
-class CoinbaseAPI():
-    def __init__(self, product_id):
-        self.base_url = 'https://api.coinbase.com/v2'
-        self.product_id = product_id
-        self.key, self.secret, self.passphrase = self.get_credentials()
-
-    def get_credentials(self):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        key = config.get('coinbase', 'key')
-        secret = config.get('coinbase', 'secret')
-        passphrase = config.get('coinbase', 'passphrase')
-        return key, secret, passphrase
-
-    def get_wallet_balance(self):
-        endpoint = f'{self.base_url}/accounts'
-        headers = {
-            'CB-ACCESS-KEY': self.key,
-            'CB-ACCESS-SIGN': self.secret,
-            'CB-ACCESS-PASSPHRASE': self.passphrase,
-            'CB-VERSION': '2023-04-10'
-        }
-        response = requests.get(endpoint, headers=headers)
-        data = response.json()
-        balance = float(data['data'][0]['balance']['amount'])
-        return balance
-
-    def get_live_data(self):
-        endpoint = f'{self.base_url}/prices/{self.product_id}-USD/spot'
-        params = {'currency': {self.product_id}}
-        response = requests.get(endpoint, params=params)
-        data = response.json()['data']
-        timestamp = pd.to_datetime(data['timestamp']).tz_localize(None)
-        price = float(data['amount'])
-        price_data = pd.DataFrame({'timestamp': [timestamp], 'price': [price]})
-        return price_data
-    
-    def get_historical_data(self, granularity, train_period):
-        end_time = datetime.now()
-        start_time = end_time - train_period
-        
-        endpoint = f"{self.base_url}/products/{self.product_id}/candles"
-        params = {
-            'start': start_time.isoformat(),
-            'end': end_time.isoformat(),
-            'granularity': granularity
-        }
-        response = requests.get(endpoint, params=params)
-        data = response.json()
-        df = pd.DataFrame(data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
-        df['time'] = pd.to_datetime(df['time'], unit='s')
-        df = df.set_index('time')
-        df = df[['open']]
-        
-        return df
 
 class CryptoTrader:
     def __init__(self, initial_balance, trade_interval, run_time, 
@@ -370,3 +226,142 @@ class CryptoTrader:
             current_time = pd.Timestamp.now()   # Update the current time
 
 
+class CryptoLSTM(nn.Module):
+    def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
+        super(CryptoLSTM, self).__init__()
+        # Define the layers
+        self.hidden_size = hidden_size
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)      # LSTM layer
+        self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
+        self.fc2 = nn.Linear(hidden_size//2 + indicator_size, output_size)  # Fully-connected layer 2
+        self.sigmoid = nn.Sigmoid()                                         # Sigmoid activation function
+
+        # Define other parameters
+        self.verbose = verbose  # Verbose debug flag
+
+    # Define the forward function
+    def forward(self, x, hidden, indicator):
+        out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
+        out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
+        out = self.sigmoid(out)                             # Apply sigmoid activation function
+        out = self.fc2(torch.cat((out, indicator), dim=1))  # Concatenate output of first fully connected layer with indicator data and pass through second fully connected layer
+        out = self.sigmoid(out)                             # Apply sigmoid activation function
+        return out, hidden
+    
+    def create_sequences(self, data, seq_length):
+        """
+        Create sequences for training/evaluation
+        """
+        sequences = []
+        targets = []
+
+        # Extract price and indicator data
+        price_data = data[['price']]
+        indicator_data = data.drop(columns=['price'])
+
+        # Iterate over the data to create sequences
+        for i in range(seq_length, len(data)):
+            sequence = price_data[i - seq_length:i]
+            target = data[i:i+1]['price'].values[0]
+
+            # Add indicator values to the sequence
+            indicators = indicator_data[i - seq_length:i].values
+            sequence = np.hstack([sequence.values, indicators])
+
+            sequences.append(sequence)
+            targets.append(target)
+
+        # Convert lists to tensors
+        sequences = torch.tensor(sequences, dtype=torch.float32)
+        targets = torch.tensor(targets, dtype=torch.float32)
+
+        return sequences, targets
+    
+    def train(self, data, batch_size=32, epochs=10, seq_length=10):
+        sequences, labels = self.create_sequences(data=data, seq_length=seq_length)  # Convert training data to sequences and labels
+
+        # Create DataLoader
+        dataset = CryptoDataset(sequences, labels)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+        # Train the model
+        for epoch in range(epochs):
+            running_loss = 0.0
+            for i, data in enumerate(dataloader):
+                inputs, labels = data
+                self.optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, labels)
+                loss.backward()
+                self.optimizer.step()
+                running_loss += loss.item()
+            if self.verbose: print(f'Epoch {epoch+1} loss: {running_loss/len(dataloader):.6f}') # Print if verbose
+
+
+class CryptoDataset(Dataset):
+    def __init__(self, sequences, labels):
+        self.sequences = sequences
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        return self.sequences[index], self.labels[index]
+
+
+class CoinbaseAPI():
+    def __init__(self, product_id):
+        self.base_url = 'https://api.coinbase.com/v2'
+        self.product_id = product_id
+        self.key, self.secret, self.passphrase = self.get_credentials()
+
+    def get_credentials(self):
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        key = config.get('coinbase', 'key')
+        secret = config.get('coinbase', 'secret')
+        passphrase = config.get('coinbase', 'passphrase')
+        return key, secret, passphrase
+
+    def get_wallet_balance(self):
+        endpoint = f'{self.base_url}/accounts'
+        headers = {
+            'CB-ACCESS-KEY': self.key,
+            'CB-ACCESS-SIGN': self.secret,
+            'CB-ACCESS-PASSPHRASE': self.passphrase,
+            'CB-VERSION': '2023-04-10'
+        }
+        response = requests.get(endpoint, headers=headers)
+        data = response.json()
+        balance = float(data['data'][0]['balance']['amount'])
+        return balance
+
+    def get_live_data(self):
+        endpoint = f'{self.base_url}/prices/{self.product_id}-USD/spot'
+        params = {'currency': {self.product_id}}
+        response = requests.get(endpoint, params=params)
+        data = response.json()['data']
+        timestamp = pd.to_datetime(data['timestamp']).tz_localize(None)
+        price = float(data['amount'])
+        price_data = pd.DataFrame({'timestamp': [timestamp], 'price': [price]})
+        return price_data
+    
+    def get_historical_data(self, granularity, train_period):
+        end_time = datetime.now()
+        start_time = end_time - train_period
+        
+        endpoint = f"{self.base_url}/products/{self.product_id}/candles"
+        params = {
+            'start': start_time.isoformat(),
+            'end': end_time.isoformat(),
+            'granularity': granularity
+        }
+        response = requests.get(endpoint, params=params)
+        data = response.json()
+        df = pd.DataFrame(data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        df = df.set_index('time')
+        df = df[['open']]
+        
+        return df
