@@ -17,6 +17,17 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 
 class CryptoTrader:
+    """
+    A class for creating and training a LSTM-based cryptocurrency trading algorithm. Call train(), then run(), or train_run().
+
+    Methods:
+        train(self, data, batch_size=32, epochs=10)
+            Trains the LSTM model on the given historical price data.
+        run()
+            Starts the live trading loop.
+        train_run()
+            Train the model and start the live trading loop in one call.
+    """
     def __init__(self, initial_balance, trade_interval, run_time, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
                  order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, verbose=False):
@@ -61,12 +72,11 @@ class CryptoTrader:
         self.end_time = self.initial_time + run_time_delta
 
     # Define and initialize the model, optimizer, and loss function
+    #TODO: Move criterion and optimizer to CryptoLSTM
     def initialize_model(self):
         indicator_size = len(self.price_data.columns) - 2 # Number of indicator columns
 
         self.model = CryptoLSTM(input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
-        self.criterion = nn.MSELoss()                                # MSE loss function
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)    # Adam optimizer
 
     # Get live data
     def get_live_data(self):
@@ -105,20 +115,14 @@ class CryptoTrader:
         self.optimizer.zero_grad()   # Clear the gradients from the optimizer
 
         output, self.hidden = self.model(input_seq, self.hidden)    # Pass the input sequence and previous hidden state through the model
-        loss = self.criterion(target_seq, output)                   # Compute the loss between the predicted and actual values
+        loss = self.model.criterion(target_seq, output)                   # Compute the loss between the predicted and actual values
 
         loss.backward()         # Backpropagate loss
-        self.optimizer.step()   # Update model parameters
+        self.model.optimizer.step()   # Update model parameters
         
     # Use the model to make a price prediction
     def predict(self):
-        self.model.eval()
-        with torch.no_grad():
-            input_seq = self.price_data.iloc[-1:, 1:].values
-            input_seq = torch.tensor(input_seq).unsqueeze(1).float()
-            output, _ = self.model(input_seq, self.hidden)
-            predicted_price = output.item()
-            confidence = 1.0 - self.criterion(output, input_seq[:, -1:, :]).item()
+        predicted_price, confidence = self.model.predict(data=self.price_data, hidden=self.hidden)
         return predicted_price, confidence
     
     # Get order amount
@@ -182,6 +186,15 @@ class CryptoTrader:
     def print_status(self):
         print(self.order_log.iloc[-1])
 
+    # Train and run
+    def train_run(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10, seq_length=10):
+        self.train(historical_period=historical_period, 
+                   historical_period_unit=historical_period_unit, 
+                   batch_size=batch_size, 
+                   epochs=epochs, 
+                   seq_length=seq_length)
+        self.run()
+
     # Train the model on historical data
     def train(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10, seq_length=10):
         self.train_data = self.get_historical_data(granularity=self.trade_interval, # Get historical data
@@ -196,10 +209,7 @@ class CryptoTrader:
     def run(self):
 
         self.initialize_time()          # Initialize time parameters
-        self.initialize_model()         # Initialize the model
         balance = self.initial_balance  # Initialize the wallet balance
-
-        # Train
 
         # Initialize the current time and end time
         current_time = self.initial_time
@@ -227,6 +237,20 @@ class CryptoTrader:
 
 
 class CryptoLSTM(nn.Module):
+    """
+    A class for creating an LSTM-based cryptocurrency trading algorithm.
+
+    Methods:
+        __init__(self, input_size, indicator_size, hidden_size, output_size)
+            Initializes the LSTM model with the specified input, indicator, and output sizes.
+        create_sequences(self, data, seq_length=10)
+            Converts the historical price data to sequences and labels for training.
+        train(self, data, batch_size=32, epochs=10)
+            Trains the LSTM model on the given historical price data.
+        predict(self, sequence)
+            Predicts the next price in a given sequence using the trained LSTM model.
+
+    """
     def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
         super(CryptoLSTM, self).__init__()
         # Define the layers
@@ -235,6 +259,10 @@ class CryptoLSTM(nn.Module):
         self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
         self.fc2 = nn.Linear(hidden_size//2 + indicator_size, output_size)  # Fully-connected layer 2
         self.sigmoid = nn.Sigmoid()                                         # Sigmoid activation function
+
+        # Define model parameters
+        self.criterion = nn.MSELoss()                                # MSE loss function
+        self.optimizer = optim.Adam(self.parameters(), lr=0.001)     # Adam optimizer
 
         # Define other parameters
         self.verbose = verbose  # Verbose debug flag
@@ -297,8 +325,21 @@ class CryptoLSTM(nn.Module):
                 running_loss += loss.item()
             if self.verbose: print(f'Epoch {epoch+1} loss: {running_loss/len(dataloader):.6f}') # Print if verbose
 
+    def predict(self, data, hidden):
+        self.eval()
+        with torch.no_grad():
+            input_seq = data.iloc[-1:, 1:].values
+            input_seq = torch.tensor(input_seq).unsqueeze(1).float()
+            output, _ = self(input_seq, hidden)
+            predicted_price = output.item()
+            confidence = 1.0 - self.criterion(output, input_seq[:, -1:, :]).item()
+        return predicted_price, confidence
+
 
 class CryptoDataset(Dataset):
+    """
+    A class for creating a PyTorch dataset from sequences and labels.
+    """
     def __init__(self, sequences, labels):
         self.sequences = sequences
         self.labels = labels
@@ -311,6 +352,19 @@ class CryptoDataset(Dataset):
 
 
 class CoinbaseAPI():
+    """
+    A class for interacting with the Coinbase Pro API to retrieve account information and real-time cryptocurrency prices.
+
+    Methods:
+        get_credentials(self)
+            Retrieves the API key, secret key, and passphrase from the config.ini file.
+        get_wallet_balance(self)
+            Retrieves the account balance of the user's wallet on Coinbase.
+        get_live_data(self)
+            Retrieves the real-time price of a specified cryptocurrency on Coinbase.
+        get_historical_data(self)
+            Retrieves the historical price data of a specified cryptocurrency on Coinbase.
+    """
     def __init__(self, product_id):
         self.base_url = 'https://api.coinbase.com/v2'
         self.product_id = product_id
