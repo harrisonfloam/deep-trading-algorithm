@@ -1,6 +1,7 @@
 ## Crypto Trading Algorithm
 # Harrison Floam, 10 April 2023
 # crypto-trading-algorithm
+# test
 
 # Import Libraries
 import requests
@@ -122,7 +123,7 @@ class CryptoTrader:
 
         self.model = CryptoLSTM(input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1) # Model instance
         self.criterion = nn.MSELoss()                                # MSE loss function
-        self.optimizer = optim.Adam(model.parameters(), lr=0.001)    # Adam optimizer
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)    # Adam optimizer
 
     
     # Add indicators to the data
