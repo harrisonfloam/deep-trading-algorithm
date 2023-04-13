@@ -1,5 +1,6 @@
 ## Crypto Trading Algorithm
 # Harrison Floam, 10 April 2023
+# crypto-trading-algorithm
 
 # Import Libraries
 import requests
