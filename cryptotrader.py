@@ -13,6 +13,7 @@ import pandas_ta as ta
 import configparser
 import time
 import cbpro
+import datetime
 
 # Define the Model Class
 class CryptoLSTM(nn.Module):
@@ -70,8 +71,24 @@ class CoinbaseAPI():
         price_data = pd.DataFrame({'timestamp': [timestamp], 'price': [price]})
         return price_data
     
-    def get_historical_data(self):
-        pass
+    def get_historical_data(self, granularity, train_period):
+        end_time = datetime.now()
+        start_time = end_time - train_period
+        
+        endpoint = f"{self.base_url}/products/{self.product_id}/candles"
+        params = {
+            'start': start_time.isoformat(),
+            'end': end_time.isoformat(),
+            'granularity': granularity
+        }
+        response = requests.get(endpoint, params=params)
+        data = response.json()
+        df = pd.DataFrame(data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
+        df['time'] = pd.to_datetime(df['time'], unit='s')
+        df = df.set_index('time')
+        df = df[['open']]
+        
+        return df
 
 class CryptoTrader:
     def __init__(self, initial_balance, trade_interval, run_time, 
@@ -125,16 +142,30 @@ class CryptoTrader:
         self.criterion = nn.MSELoss()                                # MSE loss function
         self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)    # Adam optimizer
 
+    # Get live data
+    def get_live_data(self):
+        live_data = self.coinbase_api.get_live_data()
+        return live_data
     
-    # Add indicators to the data
-    def concat_indicators(self):
-        # Compute the indicators
-        self.price_data['sma'] = ta.sma(self.price_data['price'], length=20)                            # Simple Moving Average
-        self.price_data['rsi'] = ta.rsi(self.price_data['price'], length=14)                            # Relative Strength Index
-        self.price_data['macd'], _, _ = ta.macd(self.price_data['price'], fast=12, slow=26, signal=9)   # Moving Average  Convergence Divergence
+    def get_historical_data(self, train_period, train_period_unit):
+        try:
+            train_period_delta = pd.Timedelta(train_period, train_period_unit)
+        except ValueError:
+            train_period_delta = pd.Timedelta(train_period, 'h')
+            raise ValueError(f"Invalid time unit: {train_period_unit}. Expected 'h', or 'd', 'm'. Using 'h'.")
+        
+        historical_data = self.coinbase_api.get_historical_data(granularity=self.trade_interval, train_period=train_period_delta)
 
-        self.price_data.dropna(inplace=True)  # Drop rows with NaN values
-        self.price_data.reset_index(drop=True, inplace=True)  # Reset the index
+        return historical_data
+    # Add indicators to the data
+    def concat_indicators(self, data):
+        # Compute the indicators
+        data['sma'] = ta.sma(data['price'], length=20)                            # Simple Moving Average
+        data['rsi'] = ta.rsi(data['price'], length=14)                            # Relative Strength Index
+        data['macd'], _, _ = ta.macd(data['price'], fast=12, slow=26, signal=9)   # Moving Average  Convergence Divergence
+
+        data.dropna(inplace=True)  # Drop rows with NaN values
+        data.reset_index(drop=True, inplace=True)  # Reset the index
 
     # Update the model using the latest price data
     def update_model(self):
@@ -228,7 +259,11 @@ class CryptoTrader:
     def train(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10):
         # Initialize model
         # Get historical data
+        self.train_data = self.get_historical_data(granularity=self.trade_interval, 
+                                                   historical_period=historical_period, 
+                                                   historical_period_unit=historical_period_unit)
         # Concat_indicators
+        self.concat_indicators(self.train_data)
         # Train
         pass
     # Start the live trading loop
@@ -238,25 +273,25 @@ class CryptoTrader:
         self.initialize_model()         # Initialize the model
         balance = self.initial_balance  # Initialize the wallet balance
 
+        # Train
+        
         # Initialize the current time and end time
         current_time = self.initial_time
         end_time = self.end_time
 
-        # Get historical data
-
         # Loop until end time is reached
         while current_time < end_time:
-            live_data = self.coinbase_api.get_live_data()               # Get the live data
-            self.price_data = self.concat_indicators(live_data)         # Add indicators to the data
+            live_data = self.get_live_data()               # Get the live data
+            self.concat_indicators(live_data)              # Add indicators to the data
             self.update_model(self.price_data)                          # Update the model
             predicted_price, confidence = self.predict(self.price_data) # Predicted price
             current_price = live_data['price'][0]                       # Current price
             order, balance = self.get_order_amount()                    # Order amount
-            trade_decision = self.make_trade_decision(predicted_price=predicted_price, 
+            trade_decision = self.make_trade_decision(predicted_price=predicted_price,  # Make a trade decision
                                                       current_price=current_price, 
                                                       confidence=confidence, 
-                                                      order=order)   # Make a trade decision
-            self.execute_trade(trade_decision, order)  # Execute trade
+                                                      order=order)
+            self.execute_trade(trade_decision, order)                # Execute trade
 
             self.log_order(trade_decision, order, predicted_price, confidence, current_price, balance)   # Log order
             self.print_status() # Print the current status
