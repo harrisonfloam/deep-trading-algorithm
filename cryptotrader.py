@@ -28,10 +28,14 @@ class CryptoTrader:
             Starts the live trading loop.
         train_run()
             Train the model and start the live trading loop in one call.
+        test_train()
+            Train the model with mock data
+        test_run(test_data)
+            Run the live trading loop with mock data
     """
     def __init__(self, initial_balance, trade_interval, run_time, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
-                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, verbose=False):
+                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, test=False, verbose=False):
         # Initialize trading parameters
         self.product_id = product_id                        # Crypto symbol
         self.initial_balance = initial_balance              # Starting balance to trade
@@ -60,6 +64,7 @@ class CryptoTrader:
         # Initialize tracking parameters
         self.order_log = pd.DataFrame()
         self.verbose = verbose
+        self.test = test
 
     # Initialize time parameters
     def initialize_time(self):
@@ -104,9 +109,8 @@ class CryptoTrader:
         data.reset_index(drop=True, inplace=True)  # Reset the index
 
     # Update the model using the latest price data
-    # TODO: Use create_sequences() here
-    def update_model(self):
-        self.model.update_model(self.price_data)    # Call update method in CryptoLSTM class
+    def update_model(self, data):
+        self.model.update_model(data)    # Call update method in CryptoLSTM class
         
     # Use the model to make a price prediction
     def predict(self):
@@ -120,6 +124,7 @@ class CryptoTrader:
         return order, balance
         
     # Use the model to make a trade decision
+    #TODO: if balance == 0, hold
     def make_trade_decision(self, predicted_price, current_price, confidence, order):
 
         slippage = order * predicted_price * self.slippage_p    # Slippage ($)
@@ -138,6 +143,7 @@ class CryptoTrader:
             return "HOLD"
     
     # Execute a buy order using Coinbase API
+    #TODO: Move contents to CoinbaseAPI class, just call the method here
     def buy(self, order):
         auth_client = cbpro.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
         order = auth_client.place_market_order(product_id=self.product_id, side='buy', funds=order)
@@ -197,7 +203,6 @@ class CryptoTrader:
     def run(self):
 
         self.initialize_time()          # Initialize time parameters
-        balance = self.initial_balance  # Initialize the wallet balance
 
         # Initialize the current time and end time
         current_time = self.initial_time
@@ -222,6 +227,38 @@ class CryptoTrader:
 
             time.sleep(self.trade_interval) # Wait for the trade interval before repeating the loop
             current_time = pd.Timestamp.now()   # Update the current time
+    
+    # Run live trading loop with test data
+    #TODO: Figure this out
+    def test_run(self, test_data):
+        if not self.test: pass  # Pass if not in test mode
+        
+        self.initialize_time()  # Initialize time parameters
+
+        # Initialize the current time and end time
+        current_time = self.initial_time
+        end_time = self.end_time
+
+        for i, row in test_data.iterrows():
+            # Format data as a dataframe
+            data = pd.DataFrame([row], columns=test_data.columns)
+
+            self.concat_indicators(data)  # Add indicators to the data
+            self.update_model(data)  # Update the model
+            predicted_price, confidence = self.predict()  # Predicted price
+            current_price = data['price'][0]  # Current price
+            order, balance = self.get_order_amount()  # Order amount
+            trade_decision = self.make_trade_decision(predicted_price=predicted_price,  # Make a trade decision
+                                                       current_price=current_price,
+                                                       confidence=confidence,
+                                                       order=order)
+            self.execute_trade(trade_decision, order)  # Execute trade
+            self.log_order(trade_decision, order, predicted_price, confidence, current_price, balance)  # Log order
+            self.print_status()  # Print the current status
+
+            current_time += pd.Timedelta(seconds=self.trade_interval)
+            if current_time >= end_time:
+                break
 
 
 class CryptoLSTM(nn.Module):
