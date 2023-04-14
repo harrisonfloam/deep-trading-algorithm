@@ -8,6 +8,10 @@ from unittest.mock import Mock
 from cryptotrader import CryptoLSTM, CoinbaseAPI, CryptoTrader, initialize_params
 
 
+#TODO: Create class that makes test data, with patterns that look like BTC. Pull old BTC data?
+#TODO: Create CryptoTrader instances in test mode
+#TODO: Need a way to compare results to actual... is it overfitting?
+
 class TestCryptoTrader(unittest.TestCase):
     def setUp(self):
         # Create a mock for CoinbaseAPI
