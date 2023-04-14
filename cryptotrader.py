@@ -425,10 +425,6 @@ class CoinbaseAPI():
 # To do list
 #TODO: In the CryptoTrader class, consistently use the CryptoLSTM class methods for manipulating the LSTM model.
 
-#TODO: Move the initialization of the criterion and optimizer from the initialize_model() method to the CryptoLSTM class.
-
-#TODO: Use the create_sequences() method in the update_model() method for creating input and target sequences.
-
 #TODO: Use the unittest.mock library to create mock API responses for testing purposes, allowing tests to run without waiting for actual time periods.
 
 #TODO: Replace pd.Timedelta with datetime.timedelta for handling time-related calculations in the code.
