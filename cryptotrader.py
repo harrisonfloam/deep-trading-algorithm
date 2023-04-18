@@ -1,6 +1,16 @@
 ## Crypto Trading Algorithm
 # Harrison Floam, 10 April 2023
 
+# To do list
+#TODO: Create testing framework
+#TODO: Replace pd.Timedelta with datetime.timedelta
+#TODO: Change all time periods to actual dates
+#TODO: Put model in a separate file? Different types of models?
+#TODO: Error handling
+#TODO: Refine trading strategy
+#TODO: Risk management based on market volatility
+#TODO: Figure out UX
+
 # Import Libraries
 import requests
 import configparser
@@ -230,6 +240,7 @@ class CryptoTrader:
 
             time.sleep(self.trade_interval) # Wait for the trade interval before repeating the loop
             current_time = pd.Timestamp.now()   # Update the current time
+            #TODO: Account for time it takes to trade?
     
     # Run live trading loop with test data
     #TODO: Figure this out
@@ -485,8 +496,3 @@ class CoinbaseAPI():
         df = df[['open']]
         
         return df
-
-# To do list
-#TODO: Create testing framework
-#TODO: Replace pd.Timedelta with datetime.timedelta
-#TODO: Change all time periods to actual dates
