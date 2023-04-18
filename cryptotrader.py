@@ -20,6 +20,7 @@ class CryptoTrader:
     """
     A class for creating and training a LSTM-based cryptocurrency trading algorithm. 
     Initialize, then call train(), then run(), or train_run().
+    To test, set test=True and call test_train(), then test_run(), or test_train_run().
 
     Methods:
         train(self, data, batch_size=32, epochs=10)
@@ -190,8 +191,10 @@ class CryptoTrader:
         self.run()
 
     # Train the model on historical data
+    #TODO: Change all time periods to dates instead of "1 months"
     def train(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10, seq_length=10):
-        self.train_data = self.get_historical_data(granularity=self.trade_interval, # Get historical data
+        # Get historical data on training period
+        self.train_data = self.get_historical_data(granularity=self.trade_interval,
                                                    historical_period=historical_period, 
                                                    historical_period_unit=historical_period_unit)
         self.concat_indicators(self.train_data) # Concat_indicators
@@ -276,6 +279,7 @@ class CryptoLSTM(nn.Module):
             Predicts the next price in a given sequence using the trained LSTM model.
 
     """
+    #TODO: Is this model set up correctly?
     def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
         super(CryptoLSTM, self).__init__()
         # Define the layers
@@ -301,6 +305,9 @@ class CryptoLSTM(nn.Module):
         out = self.sigmoid(out)                             # Apply sigmoid activation function
         return out, hidden
     
+    #TODO: Do I need a backward() or is it part of the model
+
+    # Create tensor sequences for model input
     def create_sequences(self, data, seq_length):
         """
         Create sequences for training/evaluation
@@ -331,6 +338,7 @@ class CryptoLSTM(nn.Module):
 
         return sequences, targets
     
+    # Train the model
     def train(self, data, seq_length, batch_size=32, epochs=10):
         sequences, labels = self.create_sequences(data=data, seq_length=seq_length)  # Convert training data to sequences and labels
 
@@ -353,8 +361,9 @@ class CryptoLSTM(nn.Module):
                 running_loss += loss.item()
             if self.verbose: print(f'Epoch {epoch+1} loss: {running_loss/len(dataloader):.6f}') # Print if verbose
 
+    # Query the model
     def predict(self, data, hidden):
-        self.eval()
+        self.eval()     # Toggle evaluation mode
         with torch.no_grad():
             input_seq = data.iloc[-1:, 1:].values
             input_seq = torch.tensor(input_seq).unsqueeze(1).float()
@@ -363,6 +372,7 @@ class CryptoLSTM(nn.Module):
             confidence = 1.0 - self.criterion(output, input_seq[:, -1:, :]).item()
         return predicted_price, confidence
     
+    # Update the model with new data
     def update_model(self, data):
         input_seq, target_seq = self.create_sequences(data=data, seq_length=1)
         self.optimizer.zero_grad()  # Clear the gradients from the optimizer
@@ -379,6 +389,7 @@ class CryptoDataset(Dataset):
     """
     A class for creating a PyTorch dataset from sequences and labels.
     """
+    #TODO: Is this needed?
     def __init__(self, sequences, labels):
         self.sequences = sequences
         self.labels = labels
@@ -404,11 +415,16 @@ class CoinbaseAPI():
         get_historical_data(self)
             Retrieves the historical price data of a specified cryptocurrency on Coinbase.
     """
+
+    #TODO: Confirm actual CB API
+    #TODO: Figure out how to store secret key
+
     def __init__(self, product_id):
         self.base_url = 'https://api.coinbase.com/v2'
         self.product_id = product_id
         self.key, self.secret, self.passphrase = self.get_credentials()
 
+    # Get Coinbase credentials from .ini file
     def get_credentials(self):
         config = configparser.ConfigParser()
         config.read('config.ini')
@@ -417,6 +433,7 @@ class CoinbaseAPI():
         passphrase = config.get('coinbase', 'passphrase')
         return key, secret, passphrase
 
+    # Get current Coinbase wallet balance
     def get_wallet_balance(self):
         endpoint = f'{self.base_url}/accounts'
         headers = {
@@ -425,21 +442,28 @@ class CoinbaseAPI():
             'CB-ACCESS-PASSPHRASE': self.passphrase,
             'CB-VERSION': '2023-04-10'
         }
+
         response = requests.get(endpoint, headers=headers)
         data = response.json()
+
         balance = float(data['data'][0]['balance']['amount'])
         return balance
 
+    # Get live price data
     def get_live_data(self):
         endpoint = f'{self.base_url}/prices/{self.product_id}-USD/spot'
         params = {'currency': {self.product_id}}
+
         response = requests.get(endpoint, params=params)
         data = response.json()['data']
+
         timestamp = pd.to_datetime(data['timestamp']).tz_localize(None)
+
         price = float(data['amount'])
         price_data = pd.DataFrame({'timestamp': [timestamp], 'price': [price]})
         return price_data
     
+    # Get historical price data
     def get_historical_data(self, granularity, train_period):
         end_time = datetime.now()
         start_time = end_time - train_period
@@ -450,9 +474,12 @@ class CoinbaseAPI():
             'end': end_time.isoformat(),
             'granularity': granularity
         }
+
         response = requests.get(endpoint, params=params)
         data = response.json()
+
         df = pd.DataFrame(data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
+        
         df['time'] = pd.to_datetime(df['time'], unit='s')
         df = df.set_index('time')
         df = df[['open']]
@@ -460,12 +487,6 @@ class CoinbaseAPI():
         return df
 
 # To do list
-#TODO: In the CryptoTrader class, consistently use the CryptoLSTM class methods for manipulating the LSTM model.
-
-#TODO: Use the unittest.mock library to create mock API responses for testing purposes, allowing tests to run without waiting for actual time periods.
-
-#TODO: Replace pd.Timedelta with datetime.timedelta for handling time-related calculations in the code.
-
-#TODO: In the run() method, change all time periods to actual dates instead of using "1 month" or similar string representations.
-
-#TODO: Ensure that the CoinbaseAPI class is defined and included in the provided code.
+#TODO: Create testing framework
+#TODO: Replace pd.Timedelta with datetime.timedelta
+#TODO: Change all time periods to actual dates
