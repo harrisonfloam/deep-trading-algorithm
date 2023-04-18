@@ -10,6 +10,9 @@
 #TODO: Refine trading strategy
 #TODO: Risk management based on market volatility
 #TODO: Figure out UX
+#TODO: Change data to include all columns - open, h, l, close, vol, etc
+#TODO: Use Deep Reinforcement Learning? Deep Q Networks? - generalize CryptoTrader more to work with different models
+#TODO: Move model class to another file. Parent class CryptoModel should inherit different models.
 
 # Import Libraries
 import requests
@@ -189,7 +192,7 @@ class CryptoTrader:
 
     # Print current status of the algorithm
     def print_status(self):
-        print(self.order_log.iloc[-1])
+        if self.verbose: print(self.order_log.iloc[-1])
 
     # Train and run
     def train_run(self, historical_period=1, historical_period_unit='m', batch_size=32, epochs=10, seq_length=10):
@@ -242,6 +245,22 @@ class CryptoTrader:
             current_time = pd.Timestamp.now()   # Update the current time
             #TODO: Account for time it takes to trade?
     
+    # Train and run
+    def test_train_run(self, test_train_data, batch_size=32, epochs=10, seq_length=10):
+        self.test_train(test_train_data=test_train_data, 
+                        batch_size=batch_size, 
+                        epochs=epochs, 
+                        seq_length=seq_length)
+        self.test_run()
+
+    # Train model with test data
+    def test_train(self, test_train_data, batch_size=32, epochs=10, seq_length=10):
+        if not self.test: pass  # Pass if not in test mode
+
+        self.concat_indicators(test_train_data) # Concat_indicators
+
+        self.model.train(data=test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
+
     # Run live trading loop with test data
     #TODO: Figure this out
     def test_run(self, test_data):
