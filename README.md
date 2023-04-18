@@ -4,7 +4,7 @@ Work in progress.
 
 Python module that creates a live trading framework for a chosen cryptocurrency using a PyTorch LSTM neural network model.
 
-### Usage
+## Usage
 1. Initialize a CryptoTrader instance with desired parameters. Choose cryptocurrency, initial balance to trade with, total live trading time, trade interval, and trading parameters.
 2. Train the model using the train method of the CryptoTrader class. Choose training period and various model parameters.
 3. Run the model using the run method. The live trading loop gets live data, updates the model, predicts the future price, makes a trade decision, and loops until the end time is reached.
