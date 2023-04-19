@@ -6,11 +6,11 @@ from models.crypto_lstm import CryptoLSTM
 class CryptoModel:
     """A wrapper class for different cryptocurrency trading models.
     
-    Parameters:
+    ### Parameters:
     -----------
-    model_class: class
+    - model_class: class
         The trading model class to be used (e.g. CryptoLSTM).
-    **kwargs:
+    - **kwargs:
         Additional arguments to be passed to the model class constructor.
     """
     def __init__(self, model_class, **kwargs):

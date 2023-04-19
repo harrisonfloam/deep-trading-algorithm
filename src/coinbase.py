@@ -12,15 +12,16 @@ class CoinbaseAPI():
     """
     A class for interacting with the Coinbase Pro API to retrieve account information and real-time cryptocurrency prices.
 
-    Methods:
-        get_credentials(self)
-            Retrieves the API key, secret key, and passphrase from the config.ini file.
-        get_wallet_balance(self)
-            Retrieves the account balance of the user's wallet on Coinbase.
-        get_live_data(self)
-            Retrieves the real-time price of a specified cryptocurrency on Coinbase.
-        get_historical_data(self)
-            Retrieves the historical price data of a specified cryptocurrency on Coinbase.
+    ### Methods:
+    -----------
+    - get_credentials(self)
+        Retrieves the API key, secret key, and passphrase from the config.ini file.
+    - get_wallet_balance(self)
+        Retrieves the account balance of the user's wallet on Coinbase.
+    - get_live_data(self)
+        Retrieves the real-time price of a specified cryptocurrency on Coinbase.
+    - get_historical_data(self)
+        Retrieves the historical price data of a specified cryptocurrency on Coinbase.
     """
 
     #TODO: Confirm actual CB API

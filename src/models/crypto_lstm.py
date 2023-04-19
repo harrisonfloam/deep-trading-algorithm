@@ -1,19 +1,28 @@
 ## Crypto LSTM Model Class
 # Harrison Floam, 18 April 2023
 
+# Import
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
+
 class CryptoLSTM(nn.Module):
     """
     A class for creating an LSTM-based cryptocurrency trading algorithm.
 
-    Methods:
-        __init__(self, input_size, indicator_size, hidden_size, output_size)
-            Initializes the LSTM model with the specified input, indicator, and output sizes.
-        create_sequences(self, data, seq_length=10)
-            Converts the historical price data to sequences and labels for training.
-        train(self, data, batch_size=32, epochs=10)
-            Trains the LSTM model on the given historical price data.
-        predict(self, sequence)
-            Predicts the next price in a given sequence using the trained LSTM model.
+    ### Methods:
+    -----------
+    - __init__(self, input_size, indicator_size, hidden_size, output_size)
+        Initializes the LSTM model with the specified input, indicator, and output sizes.
+    - create_sequences(self, data, seq_length=10)
+        Converts the historical price data to sequences and labels for training.
+    - train(self, data, batch_size=32, epochs=10)
+        Trains the LSTM model on the given historical price data.
+    - predict(self, sequence)
+        Predicts the next price in a given sequence using the trained LSTM model.
 
     """
     #TODO: Is this model set up correctly?
@@ -119,3 +128,19 @@ class CryptoLSTM(nn.Module):
 
         loss.backward()  # Backpropagate loss
         self.optimizer.step()  # Update model parameters
+
+
+class CryptoDataset(Dataset):
+    """
+    A class for creating a PyTorch dataset from sequences and labels.
+    """
+    #TODO: Is this needed?
+    def __init__(self, sequences, labels):
+        self.sequences = sequences
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, index):
+        return self.sequences[index], self.labels[index]

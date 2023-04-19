@@ -31,24 +31,25 @@ from torch.utils.data import DataLoader
 from .cryptomodel import CryptoModel
 from .coinbase import CoinbaseAPI
 
+
 class CryptoTrader:
     """
     A class for creating and training a LSTM-based cryptocurrency trading algorithm. 
     Initialize, then call train(), then run(), or train_run().
     To test, set test=True and call test_train(), then test_run(), or test_train_run().
 
-    Methods:
+    ### Methods:
     -----------
-        train(self, data, batch_size=32, epochs=10)
-            Trains the LSTM model on the given historical price data.
-        run()
-            Starts the live trading loop.
-        train_run()
-            Train the model and start the live trading loop in one call.
-        test_train()
-            Train the model with mock data
-        test_run(test_data)
-            Run the live trading loop with mock data
+    - train(self, data, batch_size=32, epochs=10)
+        Trains the LSTM model on the given historical price data.
+    - run()
+        Starts the live trading loop.
+    - train_run()
+        Train the model and start the live trading loop in one call.
+    - test_train()
+        Train the model with mock data
+    - test_run(test_data)
+        Run the live trading loop with mock data
     """
     def __init__(self, initial_balance, trade_interval, run_time, model_class, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
