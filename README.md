@@ -14,18 +14,14 @@ Python module that creates a live trading framework for a chosen cryptocurrency 
 - Trade decisions are made by make_trade_decision method in CryptoTrader class. Trades are made when the predicted price, accounting for estimated slippage and fees, is greater or less than the buy or sell threshold and the confidence of the prediction is greater than the confidence threshold.
 
 ## Outline
-crypto-trading-algorithm/
-│
-├── src/
-│   ├── __init__.py
-│   ├── cryptotrader.py
-│   ├── coinbase.py
-|   ├── cryptomodel.py
-│   └── model/
-│       └── crypto_lstm.py
-│   
-├── test/
-│   ├── __init__.py
-│   └── cryptotrader_test.py
-│   
-└── README.md
+- src/
+    - __init__.py
+    - cryptotrader.py
+    - cryptomodel.py
+    - coinbase.py
+    - model/
+        crypto_lstm.py
+- test/
+    - __init__.py
+    - cryptotrader_test.py
+- README.md
