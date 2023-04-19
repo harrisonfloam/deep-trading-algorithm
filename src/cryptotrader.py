@@ -35,6 +35,9 @@ from .coinbase import CoinbaseAPI
 class CryptoTrader:
     """
     A class for creating and training a LSTM-based cryptocurrency trading algorithm. 
+
+    ### Usage:
+    -----------
     Initialize, then call train(), then run(), or train_run().
     To test, set test=True and call test_train(), then test_run(), or test_train_run().
 
@@ -48,7 +51,7 @@ class CryptoTrader:
         Train the model and start the live trading loop in one call.
     - test_train()
         Train the model with mock data
-    - test_run(test_data)
+    - test_run()
         Run the live trading loop with mock data
     """
     def __init__(self, initial_balance, trade_interval, run_time, model_class, 
