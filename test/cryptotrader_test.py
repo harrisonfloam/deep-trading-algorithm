@@ -1,11 +1,12 @@
 ## Crypto Trading Algorithm - Test File
 # Harrison Floam, 10 April 2023
 
-# Import
+# Import Libraries
 import unittest
 from unittest.mock import Mock
 
-from cryptotrader import CryptoLSTM, CoinbaseAPI, CryptoTrader, initialize_params
+# Import Modules
+import src
 
 
 #TODO: Create class that makes test data, with patterns that look like BTC. Pull old BTC data?

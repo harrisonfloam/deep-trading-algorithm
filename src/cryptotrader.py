@@ -15,8 +15,6 @@
 #TODO: Move model class to another file. Parent class CryptoModel should inherit different models.
 
 # Import Libraries
-import requests
-import configparser
 import time
 import cbpro
 import datetime
@@ -28,6 +26,10 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+
+# Import Modules
+from .cryptomodel import CryptoModel
+from .coinbase import CoinbaseAPI
 
 class CryptoTrader:
     """
@@ -48,7 +50,7 @@ class CryptoTrader:
         test_run(test_data)
             Run the live trading loop with mock data
     """
-    def __init__(self, initial_balance, trade_interval, run_time, 
+    def __init__(self, initial_balance, trade_interval, run_time, model_class, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
                  order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, test=False, verbose=False):
         # Initialize trading parameters
@@ -63,6 +65,7 @@ class CryptoTrader:
         self.fees_p = fees_p                                # Fee percentage
 
         # Initialize data and model parameters
+        self.model_class = model_class      # Model class
         self.price_data = pd.DataFrame()    # Price dataframe
         self.model = None                   # LSTM model
         self.criterion = None               # Model criterion
@@ -96,7 +99,7 @@ class CryptoTrader:
     def initialize_model(self):
         indicator_size = len(self.price_data.columns) - 2 # Number of indicator columns
 
-        self.model = CryptoLSTM(input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
+        self.model = CryptoModel(model_class=self.model_class, input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
 
     # Get live data
     def get_live_data(self):
@@ -293,89 +296,3 @@ class CryptoTrader:
             current_time += pd.Timedelta(seconds=self.trade_interval)
             if current_time >= end_time:
                 break
-
-
-class CoinbaseAPI():
-    """
-    A class for interacting with the Coinbase Pro API to retrieve account information and real-time cryptocurrency prices.
-
-    Methods:
-        get_credentials(self)
-            Retrieves the API key, secret key, and passphrase from the config.ini file.
-        get_wallet_balance(self)
-            Retrieves the account balance of the user's wallet on Coinbase.
-        get_live_data(self)
-            Retrieves the real-time price of a specified cryptocurrency on Coinbase.
-        get_historical_data(self)
-            Retrieves the historical price data of a specified cryptocurrency on Coinbase.
-    """
-
-    #TODO: Confirm actual CB API
-    #TODO: Figure out how to store secret key
-
-    def __init__(self, product_id):
-        self.base_url = 'https://api.coinbase.com/v2'
-        self.product_id = product_id
-        self.key, self.secret, self.passphrase = self.get_credentials()
-
-    # Get Coinbase credentials from .ini file
-    def get_credentials(self):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        key = config.get('coinbase', 'key')
-        secret = config.get('coinbase', 'secret')
-        passphrase = config.get('coinbase', 'passphrase')
-        return key, secret, passphrase
-
-    # Get current Coinbase wallet balance
-    def get_wallet_balance(self):
-        endpoint = f'{self.base_url}/accounts'
-        headers = {
-            'CB-ACCESS-KEY': self.key,
-            'CB-ACCESS-SIGN': self.secret,
-            'CB-ACCESS-PASSPHRASE': self.passphrase,
-            'CB-VERSION': '2023-04-10'
-        }
-
-        response = requests.get(endpoint, headers=headers)
-        data = response.json()
-
-        balance = float(data['data'][0]['balance']['amount'])
-        return balance
-
-    # Get live price data
-    def get_live_data(self):
-        endpoint = f'{self.base_url}/prices/{self.product_id}-USD/spot'
-        params = {'currency': {self.product_id}}
-
-        response = requests.get(endpoint, params=params)
-        data = response.json()['data']
-
-        timestamp = pd.to_datetime(data['timestamp']).tz_localize(None)
-
-        price = float(data['amount'])
-        price_data = pd.DataFrame({'timestamp': [timestamp], 'price': [price]})
-        return price_data
-    
-    # Get historical price data
-    def get_historical_data(self, granularity, train_period):
-        end_time = datetime.now()
-        start_time = end_time - train_period
-        
-        endpoint = f"{self.base_url}/products/{self.product_id}/candles"
-        params = {
-            'start': start_time.isoformat(),
-            'end': end_time.isoformat(),
-            'granularity': granularity
-        }
-
-        response = requests.get(endpoint, params=params)
-        data = response.json()
-
-        df = pd.DataFrame(data, columns=['time', 'low', 'high', 'open', 'close', 'volume'])
-        
-        df['time'] = pd.to_datetime(df['time'], unit='s')
-        df = df.set_index('time')
-        df = df[['open']]
-        
-        return df
