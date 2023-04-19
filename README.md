@@ -9,6 +9,23 @@ Python module that creates a live trading framework for a chosen cryptocurrency 
 2. Train the model using the train method of the CryptoTrader class. Choose training period and various model parameters.
 3. Run the model using the run method. The live trading loop gets live data, updates the model, predicts the future price, makes a trade decision, and loops until the end time is reached.
 
-Notes:
+## Notes
 - Training and live data features are current price and indicator values for the previous time step, target is the current price.
 - Trade decisions are made by make_trade_decision method in CryptoTrader class. Trades are made when the predicted price, accounting for estimated slippage and fees, is greater or less than the buy or sell threshold and the confidence of the prediction is greater than the confidence threshold.
+
+## Outline
+crypto-trading-algorithm/
+│
+├── src/
+│   ├── __init__.py
+│   ├── cryptotrader.py
+│   ├── coinbase.py
+|   ├── cryptomodel.py
+│   └── model/
+│       └── crypto_lstm.py
+│   
+├── test/
+│   ├── __init__.py
+│   └── cryptotrader_test.py
+│   
+└── README.md
