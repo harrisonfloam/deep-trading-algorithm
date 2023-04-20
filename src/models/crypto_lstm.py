@@ -44,11 +44,11 @@ class CryptoLSTM(nn.Module):
 
     # Define the forward function
     #TODO: What is indicator here?
-    def forward(self, x, hidden, indicator):
+    def forward(self, x, hidden):
         out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
-        out = self.fc2(torch.cat((out, indicator), dim=1))  # Concatenate output of first fully connected layer with indicator data and pass through second fully connected layer
+        out = self.fc2(out)                                 # Pass output of first fully connected layer through second fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
         return out, hidden
     
@@ -69,12 +69,8 @@ class CryptoLSTM(nn.Module):
 
         # Iterate over the data to create sequences
         for i in range(seq_length, len(data)):
-            sequence = price_data[i - seq_length:i]
-            target = data[i:i+1]['price'].values[0]
-
-            # Add indicator values to the sequence
-            indicators = indicator_data[i - seq_length:i].values
-            sequence = np.hstack([sequence.values, indicators])
+            sequence = data.iloc[i - seq_length:i].values
+            target = data.iloc[i, 0]
 
             sequences.append(sequence)
             targets.append(target)
