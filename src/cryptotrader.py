@@ -1,19 +1,6 @@
 ## Crypto Trading Algorithm
 # Harrison Floam, 10 April 2023
 
-# To do list
-#TODO: Create testing framework
-#TODO: Replace pd.Timedelta with datetime.timedelta
-#TODO: Change all time periods to actual dates
-#TODO: Put model in a separate file? Different types of models?
-#TODO: Error handling
-#TODO: Refine trading strategy
-#TODO: Risk management based on market volatility
-#TODO: Figure out UX
-#TODO: Change data to include all columns - open, h, l, close, vol, etc
-#TODO: Use Deep Reinforcement Learning? Deep Q Networks? - generalize CryptoTrader more to work with different models
-#TODO: Move model class to another file. Parent class CryptoModel should inherit different models.
-
 # Import Libraries
 import time
 import cbpro
