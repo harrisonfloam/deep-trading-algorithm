@@ -30,6 +30,7 @@ class CryptoLSTM(nn.Module):
         super(CryptoLSTM, self).__init__()
         # Define the layers
         self.hidden_size = hidden_size
+        self.hidden = (torch.zeros(1, 1, self.hidden_size), torch.zeros(1, 1, self.hidden_size))  # Hidden layer
         self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)      # LSTM layer
         self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
         self.fc2 = nn.Linear(hidden_size//2 + input_size, output_size)      # Fully-connected layer 2
@@ -44,7 +45,7 @@ class CryptoLSTM(nn.Module):
 
     # Define the forward function
     def forward(self, x, hidden):
-        out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
+        out, self.hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
         out = self.fc2(out)                                 # Pass output of first fully connected layer through second fully connected layer
@@ -111,8 +112,8 @@ class CryptoLSTM(nn.Module):
         return predicted_price, confidence
     
     # Update the model with new data
-    def update_model(self, data):
-        input_seq, target_seq = self.create_sequences(data=data, seq_length=1)
+    def update_model(self, data, seq_length=1):
+        input_seq, target_seq = self.create_sequences(data=data, seq_length=seq_length)
         self.optimizer.zero_grad()  # Clear the gradients from the optimizer
 
         output, self.hidden = self(input_seq, self.hidden)  # Pass the input sequence and previous hidden state through the model
