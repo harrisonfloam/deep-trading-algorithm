@@ -19,7 +19,7 @@ class CoinbaseAPI():
     - get_wallet_balance(self)
         Retrieves the account balance of the user's wallet on Coinbase.
     - get_live_data(self)
-        Retrieves the real-time price of a specified cryptocurrency on Coinbase.
+        Retrieves the real-time price data of a specified cryptocurrency on Coinbase.
     - get_historical_data(self)
         Retrieves the historical price data of a specified cryptocurrency on Coinbase.
     """
@@ -75,7 +75,7 @@ class CoinbaseAPI():
             'open': [float(data['open'])],
             'close': [float(data['last_trade_price'])]
         })
-        
+
         return price_data
     
     # Get historical price data
