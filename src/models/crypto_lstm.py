@@ -43,7 +43,6 @@ class CryptoLSTM(nn.Module):
         self.verbose = verbose  # Verbose debug flag
 
     # Define the forward function
-    #TODO: What is indicator here?
     def forward(self, x, hidden):
         out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
@@ -62,10 +61,6 @@ class CryptoLSTM(nn.Module):
         #TODO: What even is seq_length?
         sequences = []
         targets = []
-
-        # Extract price and indicator data
-        price_data = data[['price']]
-        indicator_data = data.drop(columns=['price'])
 
         # Iterate over the data to create sequences
         for i in range(seq_length, len(data)):
