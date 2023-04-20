@@ -89,8 +89,8 @@ class CryptoLSTM(nn.Module):
         # Train the model
         for epoch in range(epochs):
             running_loss = 0.0
-            for i, data in enumerate(dataloader):
-                inputs, labels = data
+            for i, data_load in enumerate(dataloader):
+                inputs, labels = data_load
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
@@ -103,8 +103,8 @@ class CryptoLSTM(nn.Module):
     def predict(self, data, hidden):
         self.eval()     # Toggle evaluation mode
         with torch.no_grad():
-            input_seq = data.iloc[-1:, 1:].values
-            input_seq = torch.tensor(input_seq).unsqueeze(1).float()
+            input_seq = data.iloc[-1:, :].values                        # Last row of dataframe (most recent features)
+            input_seq = torch.tensor(input_seq).unsqueeze(1).float()    #TODO: do we want to predict with a sequence > 1?
             output, _ = self(input_seq, hidden)
             predicted_price = output.item()
             confidence = 1.0 - self.criterion(output, input_seq[:, -1:, :]).item()
