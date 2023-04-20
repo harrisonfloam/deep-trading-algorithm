@@ -26,13 +26,13 @@ class CryptoLSTM(nn.Module):
 
     """
     #TODO: Is this model set up correctly?
-    def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
+    def __init__(self, input_size, hidden_size, output_size=1, verbose=False):
         super(CryptoLSTM, self).__init__()
         # Define the layers
         self.hidden_size = hidden_size
         self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)      # LSTM layer
         self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
-        self.fc2 = nn.Linear(hidden_size//2 + indicator_size, output_size)  # Fully-connected layer 2
+        self.fc2 = nn.Linear(hidden_size//2 + input_size, output_size)      # Fully-connected layer 2
         self.sigmoid = nn.Sigmoid()                                         # Sigmoid activation function
 
         # Define model parameters
@@ -43,6 +43,7 @@ class CryptoLSTM(nn.Module):
         self.verbose = verbose  # Verbose debug flag
 
     # Define the forward function
+    #TODO: What is indicator here?
     def forward(self, x, hidden, indicator):
         out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
