@@ -35,10 +35,6 @@ class CryptoTrader:
         Starts the live trading loop.
     - train_run()
         Train the model and start the live trading loop in one call.
-    - test_train()
-        Train the model with mock data
-    - test_run()
-        Run the live trading loop with mock data
     """
     def __init__(self, initial_balance, trade_interval, run_time, model_class, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
@@ -242,4 +238,3 @@ class CryptoTrader:
             current_time = pd.Timestamp.now()   # Update the current time
             #TODO: Account for time it takes to trade?
     
-
