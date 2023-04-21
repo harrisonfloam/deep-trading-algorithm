@@ -15,8 +15,8 @@ class CryptoLSTM(nn.Module):
 
     ### Methods:
     -----------
-    - __init__(self, input_size, indicator_size, hidden_size, output_size)
-        Initializes the LSTM model with the specified input, indicator, and output sizes.
+    - __init__(self, input_size, hidden_size, output_size)
+        Initializes the LSTM model with the specified input, and output sizes.
     - create_sequences(self, data, seq_length=10)
         Converts the historical price data to sequences and labels for training.
     - train(self, data, batch_size=32, epochs=10)
