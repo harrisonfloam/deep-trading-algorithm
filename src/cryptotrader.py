@@ -43,7 +43,7 @@ class CryptoTrader:
     """
     def __init__(self, initial_balance, trade_interval, run_time, model_class, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
-                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, test=False, verbose=False):
+                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, test=False, verbose=False):
         # Initialize trading parameters
         self.product_id = product_id                        # Crypto symbol
         self.initial_balance = initial_balance              # Starting balance to trade
@@ -62,6 +62,7 @@ class CryptoTrader:
         self.criterion = None               # Model criterion
         self.optimizer = None               # Model optimizer
         self.hidden = None                  # Hidden layers
+        self.indicators = indicators        # Indicator toggle
 
         # Initialize Coinbase API parameters
         self.coinbase_api = CoinbaseAPI(product_id=product_id)
@@ -109,6 +110,8 @@ class CryptoTrader:
         return historical_data
     # Add indicators to the data
     def concat_indicators(self, data):
+        if not self.indicators: pass    # Pass if indicators toggle is false
+
         # Compute the indicators
         data['sma'] = ta.sma(data['close'], length=20)                            # Simple Moving Average
         data['rsi'] = ta.rsi(data['close'], length=14)                            # Relative Strength Index
