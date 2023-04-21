@@ -14,6 +14,16 @@ from src.cryptotrader import CryptoTrader
 class TestCryptoTrader(CryptoTrader):
     """
     A wrapper class for CryptoTrader that allows testing and creates additional testing methods.
+    To test, call test_train(), then test_run(), or test_train_run().
+
+    ### Methods:
+    -----------
+    - test_train()
+        Train the model with test data
+    - test_run()
+        Run the live trading loop with test data
+    - test_train_run()
+        Train and run with test data
     """
     def __init__(self):
         super().__init__()      # Inherit from parent class

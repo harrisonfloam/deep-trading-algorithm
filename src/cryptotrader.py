@@ -26,7 +26,6 @@ class CryptoTrader:
     ### Usage:
     -----------
     Initialize, then call train(), then run(), or train_run().
-    To test, set test=True and call test_train(), then test_run(), or test_train_run().
 
     ### Methods:
     -----------
