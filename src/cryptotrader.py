@@ -274,7 +274,7 @@ class CryptoTrader:
             self.concat_indicators(data)  # Add indicators to the data
             self.update_model(data)  # Update the model
             predicted_price, confidence = self.predict()  # Predicted price
-            current_price = data['price'][0]  # Current price
+            current_price = data['close'][0]  # Current price
             order, balance = self.get_order_amount()  # Order amount
             trade_decision = self.make_trade_decision(predicted_price=predicted_price,  # Make a trade decision
                                                        current_price=current_price,
