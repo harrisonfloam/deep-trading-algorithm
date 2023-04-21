@@ -19,7 +19,7 @@ class CoinbaseAPI():
     - get_wallet_balance(self)
         Retrieves the account balance of the user's wallet on Coinbase.
     - get_live_data(self)
-        Retrieves the real-time price of a specified cryptocurrency on Coinbase.
+        Retrieves the real-time price data of a specified cryptocurrency on Coinbase.
     - get_historical_data(self)
         Retrieves the historical price data of a specified cryptocurrency on Coinbase.
     """
@@ -60,15 +60,22 @@ class CoinbaseAPI():
     # Get live price data
     def get_live_data(self):
         endpoint = f'{self.base_url}/prices/{self.product_id}-USD/spot'
-        params = {'currency': {self.product_id}}
 
-        response = requests.get(endpoint, params=params)
+        response = requests.get(endpoint)
         data = response.json()['data']
 
         timestamp = pd.to_datetime(data['timestamp']).tz_localize(None)
 
-        price = float(data['amount'])
-        price_data = pd.DataFrame({'timestamp': [timestamp], 'price': [price]})
+        price_data = pd.DataFrame({
+            'timestamp': [timestamp],
+            'price': [float(data['price'])],
+            'volume': [float(data['volume'])],
+            'low': [float(data['low'])],
+            'high': [float(data['high'])],
+            'open': [float(data['open'])],
+            'close': [float(data['last_trade_price'])]
+        })
+
         return price_data
     
     # Get historical price data
@@ -90,6 +97,5 @@ class CoinbaseAPI():
         
         df['time'] = pd.to_datetime(df['time'], unit='s')
         df = df.set_index('time')
-        df = df[['open']]
         
         return df

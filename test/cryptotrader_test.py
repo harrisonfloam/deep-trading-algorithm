@@ -1,17 +1,14 @@
 ## Crypto Trading Algorithm - Test File
 # Harrison Floam, 10 April 2023
 
+
 # Import Libraries
 import unittest
 from unittest.mock import Mock
 
-# Import Modules
+# Import Modules and Packages
 import src
 
-
-#TODO: Create class that makes test data, with patterns that look like BTC. Pull old BTC data?
-#TODO: Create CryptoTrader instances in test mode
-#TODO: Need a way to compare results to actual... is it overfitting?
 
 class TestCryptoTrader(unittest.TestCase):
     def setUp(self):

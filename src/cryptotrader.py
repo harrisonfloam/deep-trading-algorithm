@@ -88,9 +88,9 @@ class CryptoTrader:
 
     # Define and initialize the model, optimizer, and loss function
     def initialize_model(self):
-        indicator_size = len(self.price_data.columns) - 2 # Number of indicator columns
+        input_size = len(self.price_data) - 1   # Number of input columns
 
-        self.model = CryptoModel(model_class=self.model_class, input_size=1, indicator_size=indicator_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
+        self.model = CryptoModel(model_class=self.model_class, input_size=input_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
 
     # Get live data
     def get_live_data(self):
@@ -110,9 +110,9 @@ class CryptoTrader:
     # Add indicators to the data
     def concat_indicators(self, data):
         # Compute the indicators
-        data['sma'] = ta.sma(data['price'], length=20)                            # Simple Moving Average
-        data['rsi'] = ta.rsi(data['price'], length=14)                            # Relative Strength Index
-        data['macd'], _, _ = ta.macd(data['price'], fast=12, slow=26, signal=9)   # Moving Average  Convergence Divergence
+        data['sma'] = ta.sma(data['close'], length=20)                            # Simple Moving Average
+        data['rsi'] = ta.rsi(data['close'], length=14)                            # Relative Strength Index
+        data['macd'], _, _ = ta.macd(data['close'], fast=12, slow=26, signal=9)   # Moving Average  Convergence Divergence
 
         data.dropna(inplace=True)  # Drop rows with NaN values
         data.reset_index(drop=True, inplace=True)  # Reset the index
@@ -225,7 +225,7 @@ class CryptoTrader:
             self.concat_indicators(live_data)              # Add indicators to the data
             self.update_model(self.price_data)                          # Update the model
             predicted_price, confidence = self.predict(self.price_data) # Predicted price
-            current_price = live_data['price'][0]                       # Current price
+            current_price = live_data['close'][0]                       # Current price
             order, balance = self.get_order_amount()                    # Order amount
             trade_decision = self.make_trade_decision(predicted_price=predicted_price,  # Make a trade decision
                                                       current_price=current_price, 
@@ -274,7 +274,7 @@ class CryptoTrader:
             self.concat_indicators(data)  # Add indicators to the data
             self.update_model(data)  # Update the model
             predicted_price, confidence = self.predict()  # Predicted price
-            current_price = data['price'][0]  # Current price
+            current_price = data['close'][0]  # Current price
             order, balance = self.get_order_amount()  # Order amount
             trade_decision = self.make_trade_decision(predicted_price=predicted_price,  # Make a trade decision
                                                        current_price=current_price,

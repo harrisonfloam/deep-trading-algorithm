@@ -15,8 +15,8 @@ class CryptoLSTM(nn.Module):
 
     ### Methods:
     -----------
-    - __init__(self, input_size, indicator_size, hidden_size, output_size)
-        Initializes the LSTM model with the specified input, indicator, and output sizes.
+    - __init__(self, input_size, hidden_size, output_size)
+        Initializes the LSTM model with the specified input, and output sizes.
     - create_sequences(self, data, seq_length=10)
         Converts the historical price data to sequences and labels for training.
     - train(self, data, batch_size=32, epochs=10)
@@ -26,13 +26,14 @@ class CryptoLSTM(nn.Module):
 
     """
     #TODO: Is this model set up correctly?
-    def __init__(self, input_size, indicator_size, hidden_size, output_size, verbose=False):
+    def __init__(self, input_size, hidden_size, output_size=1, verbose=False):
         super(CryptoLSTM, self).__init__()
         # Define the layers
         self.hidden_size = hidden_size
+        self.hidden = (torch.zeros(1, 1, self.hidden_size), torch.zeros(1, 1, self.hidden_size))  # Hidden layer
         self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)      # LSTM layer
         self.fc1 = nn.Linear(hidden_size, hidden_size//2)                   # Fully-connected layer 1
-        self.fc2 = nn.Linear(hidden_size//2 + indicator_size, output_size)  # Fully-connected layer 2
+        self.fc2 = nn.Linear(hidden_size//2 + input_size, output_size)      # Fully-connected layer 2
         self.sigmoid = nn.Sigmoid()                                         # Sigmoid activation function
 
         # Define model parameters
@@ -43,11 +44,11 @@ class CryptoLSTM(nn.Module):
         self.verbose = verbose  # Verbose debug flag
 
     # Define the forward function
-    def forward(self, x, hidden, indicator):
-        out, hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
+    def forward(self, x, hidden):
+        out, self.hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
-        out = self.fc2(torch.cat((out, indicator), dim=1))  # Concatenate output of first fully connected layer with indicator data and pass through second fully connected layer
+        out = self.fc2(out)                                 # Pass output of first fully connected layer through second fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
         return out, hidden
     
@@ -62,18 +63,10 @@ class CryptoLSTM(nn.Module):
         sequences = []
         targets = []
 
-        # Extract price and indicator data
-        price_data = data[['price']]
-        indicator_data = data.drop(columns=['price'])
-
         # Iterate over the data to create sequences
         for i in range(seq_length, len(data)):
-            sequence = price_data[i - seq_length:i]
-            target = data[i:i+1]['price'].values[0]
-
-            # Add indicator values to the sequence
-            indicators = indicator_data[i - seq_length:i].values
-            sequence = np.hstack([sequence.values, indicators])
+            sequence = data.iloc[i - seq_length:i].values
+            target = data.iloc[i, 0]
 
             sequences.append(sequence)
             targets.append(target)
@@ -97,8 +90,8 @@ class CryptoLSTM(nn.Module):
         # Train the model
         for epoch in range(epochs):
             running_loss = 0.0
-            for i, data in enumerate(dataloader):
-                inputs, labels = data
+            for i, data_load in enumerate(dataloader):
+                inputs, labels = data_load
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
@@ -111,16 +104,16 @@ class CryptoLSTM(nn.Module):
     def predict(self, data, hidden):
         self.eval()     # Toggle evaluation mode
         with torch.no_grad():
-            input_seq = data.iloc[-1:, 1:].values
-            input_seq = torch.tensor(input_seq).unsqueeze(1).float()
+            input_seq = data.iloc[-1:, :].values                        # Last row of dataframe (most recent features)
+            input_seq = torch.tensor(input_seq).unsqueeze(1).float()    #TODO: do we want to predict with a sequence > 1?
             output, _ = self(input_seq, hidden)
             predicted_price = output.item()
             confidence = 1.0 - self.criterion(output, input_seq[:, -1:, :]).item()
         return predicted_price, confidence
     
     # Update the model with new data
-    def update_model(self, data):
-        input_seq, target_seq = self.create_sequences(data=data, seq_length=1)
+    def update_model(self, data, seq_length=1):
+        input_seq, target_seq = self.create_sequences(data=data, seq_length=seq_length)
         self.optimizer.zero_grad()  # Clear the gradients from the optimizer
 
         output, self.hidden = self(input_seq, self.hidden)  # Pass the input sequence and previous hidden state through the model
