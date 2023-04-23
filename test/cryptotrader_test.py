@@ -4,8 +4,10 @@
 
 # Import Libraries
 import pandas as pd
+import numpy as np
 import unittest
 from unittest.mock import Mock
+from sklearn.model_selection import train_test_split
 
 # Import Modules and Packages
 from src.cryptotrader import CryptoTrader
@@ -28,26 +30,37 @@ class TestCryptoTrader(CryptoTrader):
     def __init__(self):
         super().__init__()      # Inherit from parent class
         self.test = True        # Set test flag to true
+        
+        self.test_train_data = pd.DataFrame()   # Train set
+        self.test_data = pd.DataFrame()         # Test set
+
+    # Read testing dataset
+    def get_test_data(self, filepath):
+        df = pd.read_csv(filepath)  # Read file to dataframe
+
+        self.test_train_data, self.test_data = train_test_split(df, test_size=0.2, shuffle=False)
+
 
     # Train and run
-    def test_train_run(self, test_train_data, batch_size=32, epochs=10, seq_length=10):
-        self.test_train(test_train_data=test_train_data, 
+    def test_train_run(self, filepath, batch_size=32, epochs=10, seq_length=10):
+        self.test_train(filepath=filepath, 
                         batch_size=batch_size, 
                         epochs=epochs, 
                         seq_length=seq_length)
         self.test_run()
 
     # Train model with test data
-    def test_train(self, test_train_data, batch_size=32, epochs=10, seq_length=10):
+    def test_train(self, filepath, batch_size=32, epochs=10, seq_length=10):
         if not self.test: pass  # Pass if not in test mode
 
-        self.concat_indicators(test_train_data) # Concat_indicators
+        self.get_test_data(filepath)
+        self.concat_indicators(self.test_train_data) # Concat_indicators #TODO: need to make concat_indicators return a df, not write to an attribute
 
-        self.model.train(data=test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
+        self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
 
     # Run live trading loop with test data
     #TODO: Figure this out
-    def test_run(self, test_data):
+    def test_run(self):
         if not self.test: pass  # Pass if not in test mode
         
         self.initialize_time()  # Initialize time parameters
@@ -56,9 +69,9 @@ class TestCryptoTrader(CryptoTrader):
         current_time = self.initial_time
         end_time = self.end_time
 
-        for i, row in test_data.iterrows():
+        for i, row in self.test_data.iterrows():
             # Format data as a dataframe
-            data = pd.DataFrame([row], columns=test_data.columns)
+            data = pd.DataFrame([row], columns=self.test_data.columns)  #TODO: what is this doing?
 
             self.concat_indicators(data)  # Add indicators to the data
             self.update_model(data)  # Update the model
