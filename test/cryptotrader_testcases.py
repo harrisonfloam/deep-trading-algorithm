@@ -4,8 +4,7 @@
 # Import Libaries and Modules
 import unittest
 
-from src.cryptotrader import CryptoModel
-from .testcryptotrader import TestCryptoTrader
+from testcryptotrader import TestCryptoTrader
 
 # Testing data
 filepath = '/data/btc.csv'
