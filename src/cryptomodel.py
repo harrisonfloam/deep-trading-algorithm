@@ -1,7 +1,6 @@
 ## Crypto Model Class
 # Harrison Floam, 18 April 2023
 
-from models.crypto_lstm import CryptoLSTM
 
 class CryptoModel:
     """A wrapper class for different cryptocurrency trading models.
