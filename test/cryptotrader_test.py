@@ -73,10 +73,10 @@ class TestCryptoTrader(CryptoTrader):
             # Format data as a dataframe
             data = pd.DataFrame([row], columns=self.test_data.columns)  #TODO: what is this doing?
 
-            self.concat_indicators(data)  # Add indicators to the data
-            self.update_model(data)  # Update the model
-            predicted_price, confidence = self.predict()  # Predicted price
-            current_price = data['close'][0]  # Current price
+            self.concat_indicators(data)  # Add indicators to the data  #TODO: concat indicators needs to change
+            self.update_model(data)  # Update the model #TODO: Check on this method
+            predicted_price, confidence = self.predict()  # Predicted price #TODO: Check on this method
+            current_price = data['close'][0]  # Current price   #TODO: Check on this method
             order, balance = self.get_order_amount()  # Order amount
             trade_decision = self.make_trade_decision(predicted_price=predicted_price,  # Make a trade decision
                                                        current_price=current_price,
