@@ -7,5 +7,8 @@ import unittest
 from src.cryptotrader import CryptoModel
 from .testcryptotrader import TestCryptoTrader
 
+# Testing data
+filepath = '/data/btc.csv'
+
 class CryptoTraderTestCase(unittest.TestCase):
-    
+    pass
