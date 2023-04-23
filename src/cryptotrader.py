@@ -114,6 +114,8 @@ class CryptoTrader:
 
         data.dropna(inplace=True)  # Drop rows with NaN values
         data.reset_index(drop=True, inplace=True)  # Reset the index
+        
+        return data
 
     # Update the model using the latest price data
     def update_model(self, data):
