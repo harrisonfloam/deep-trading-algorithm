@@ -114,7 +114,7 @@ class CryptoTrader:
 
         data.dropna(inplace=True)  # Drop rows with NaN values
         data.reset_index(drop=True, inplace=True)  # Reset the index
-        
+
         return data
 
     # Update the model using the latest price data
@@ -207,7 +207,7 @@ class CryptoTrader:
                                                    historical_period_unit=historical_period_unit)
         self.concat_indicators(self.train_data) # Concat_indicators
 
-        self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
+        self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)  # Import cryptomodel?
 
     # Start the live trading loop
     #TODO: Change all time periods to dates instead of "1 months"

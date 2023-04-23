@@ -54,9 +54,9 @@ class TestCryptoTrader(CryptoTrader):
         if not self.test: pass  # Pass if not in test mode
 
         self.get_test_data(filepath)
-        self.concat_indicators(self.test_train_data) # Concat_indicators #TODO: need to make concat_indicators return a df, not write to an attribute
+        self.test_train_data = self.concat_indicators(self.test_train_data)
 
-        self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
+        self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length) # Do I need to import cryptomodel?
 
     # Run live trading loop with test data
     #TODO: Figure this out
