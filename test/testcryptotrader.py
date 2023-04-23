@@ -29,33 +29,34 @@ class TestCryptoTrader(CryptoTrader):
     - test_train_run()
         Train and run with test data
     """
-    def __init__(self):
+    def __init__(self, filepath):
         super().__init__()      # Inherit from parent class
         self.test = True        # Set test flag to true
         self.verbose = True     # Set verbose flag to true
         
+        self.filepath = filepath                # Filepath to testing data
         self.test_train_data = pd.DataFrame()   # Train set
         self.test_data = pd.DataFrame()         # Test set
 
     # Read testing dataset
-    def get_test_data(self, filepath):
-        df = pd.read_csv(filepath)  # Read file to dataframe
+    def get_test_data(self):
+        df = pd.read_csv(self.filepath)  # Read file to dataframe
 
         self.test_train_data, self.test_data = train_test_split(df, test_size=0.2, shuffle=False)
 
     # Train and run
-    def test_train_run(self, filepath, batch_size=32, epochs=10, seq_length=10):
-        self.test_train(filepath=filepath, 
+    def test_train_run(self, batch_size=32, epochs=10, seq_length=10):
+        self.test_train(filepath=self.filepath, 
                         batch_size=batch_size, 
                         epochs=epochs, 
                         seq_length=seq_length)
         self.test_run()
 
     # Train model with test data
-    def test_train(self, filepath, batch_size=32, epochs=10, seq_length=10):
+    def test_train(self, batch_size=32, epochs=10, seq_length=10):
         if not self.test: pass  # Pass if not in test mode
 
-        self.get_test_data(filepath)
+        self.get_test_data(self.filepath)
         self.test_train_data = self.concat_indicators(self.test_train_data)
 
         self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
