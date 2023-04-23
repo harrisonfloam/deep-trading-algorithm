@@ -36,7 +36,7 @@ class CryptoTrader:
     - train_run()
         Train the model and start the live trading loop in one call.
     """
-    def __init__(self, initial_balance, trade_interval, run_time, model_class, 
+    def __init__(self, initial_balance, trade_interval, run_time, model_class=CryptoLSTM, 
                  run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
                  order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, verbose=False):
         # Initialize trading parameters
@@ -53,7 +53,7 @@ class CryptoTrader:
         # Initialize data and model parameters
         self.model_class = model_class      # Model class
         self.price_data = pd.DataFrame()    # Price dataframe
-        self.model = None                   # LSTM model
+        self.model = None                   # Model
         self.criterion = None               # Model criterion
         self.optimizer = None               # Model optimizer
         self.hidden = None                  # Hidden layers
