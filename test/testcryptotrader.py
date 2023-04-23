@@ -11,6 +11,8 @@ from sklearn.model_selection import train_test_split
 
 # Import Modules and Packages
 from src.cryptotrader import CryptoTrader
+from src.cryptomodel import CryptoModel
+from src.coinbase import CoinbaseAPI
 
 
 class TestCryptoTrader(CryptoTrader):
@@ -56,7 +58,7 @@ class TestCryptoTrader(CryptoTrader):
         self.get_test_data(filepath)
         self.test_train_data = self.concat_indicators(self.test_train_data)
 
-        self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length) # Do I need to import cryptomodel?
+        self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
 
     # Run live trading loop with test data
     #TODO: Figure this out
