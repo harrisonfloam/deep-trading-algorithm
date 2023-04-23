@@ -32,6 +32,7 @@ class TestCryptoTrader(CryptoTrader):
     def __init__(self):
         super().__init__()      # Inherit from parent class
         self.test = True        # Set test flag to true
+        self.verbose = True     # Set verbose flag to true
         
         self.test_train_data = pd.DataFrame()   # Train set
         self.test_data = pd.DataFrame()         # Test set
@@ -41,7 +42,6 @@ class TestCryptoTrader(CryptoTrader):
         df = pd.read_csv(filepath)  # Read file to dataframe
 
         self.test_train_data, self.test_data = train_test_split(df, test_size=0.2, shuffle=False)
-
 
     # Train and run
     def test_train_run(self, filepath, batch_size=32, epochs=10, seq_length=10):
