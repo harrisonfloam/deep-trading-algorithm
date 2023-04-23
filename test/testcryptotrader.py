@@ -17,7 +17,7 @@ from src.coinbase import CoinbaseAPI
 
 class TestCryptoTrader(CryptoTrader):
     """
-    A wrapper class for CryptoTrader that allows testing and creates additional testing methods.
+    A wrapper class for CryptoTrader that allows use of local data and creates additional testing methods.
     To test, call test_train(), then test_run(), or test_train_run().
 
     ### Methods:
