@@ -3,8 +3,8 @@
 
 # Import Libaries
 
-# Read CSV file to DFs
+# Read CSV file to DFs - just use pd.read_csv in  cryptotrader_test.py
 
-# Test/train split
+# Test/train split - use sklearn train_test_split in cryptotrader_test.py
 
 # Create sequences?
