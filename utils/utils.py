@@ -3,7 +3,7 @@
 
 # Import Libaries
 
-# Read CSV file to DF
+# Read CSV file to DFs
 
 # Test/train split
 
