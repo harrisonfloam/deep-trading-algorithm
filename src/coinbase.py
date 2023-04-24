@@ -2,7 +2,7 @@
 # Harrison Floam, 18 April 2023
 
 # Import
-import cbpro
+import coinbasepro as cbp
 import configparser
 import requests
 import datetime
