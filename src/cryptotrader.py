@@ -38,7 +38,7 @@ class CryptoTrader:
     """
     def __init__(self, initial_balance, trade_interval, run_time, run_time_unit='h', 
                  model_class='CryptoLSTM', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
-                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, verbose=False):
+                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, coinbase_api=CoinbaseAPI, verbose=False):
         # Initialize trading parameters
         self.product_id = product_id                        # Crypto symbol
         self.initial_balance = initial_balance              # Starting balance to trade
@@ -60,7 +60,10 @@ class CryptoTrader:
         self.indicators = indicators        # Indicator toggle
 
         # Initialize Coinbase API parameters
-        self.coinbase_api = CoinbaseAPI(product_id=product_id)
+        if coinbase_api == CoinbaseAPI:
+            self.coinbase_api = CoinbaseAPI(product_id=product_id)
+        else:
+            self.coinbase_api = coinbase_api
 
         # Initialize time parameters
         self.run_time = run_time

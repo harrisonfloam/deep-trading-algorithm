@@ -10,7 +10,7 @@ from testcryptotrader import TestCryptoTrader
 filepath = '/data/btc.csv'
 
 
-def test_cryptotrader_1():
+def test_case_1():
     # Define CryptoTrader parameters
     params = {
         'initial_balance': 100,
@@ -26,6 +26,7 @@ def test_cryptotrader_1():
         'slippage_p': 0.005,
         'fees_p': 0.005,
         'indicators': True,
+        'coinbase_api': None,
         'verbose': True,
         'filepath': filepath
     }
@@ -33,4 +34,4 @@ def test_cryptotrader_1():
     trader = TestCryptoTrader(**params)
 
 if __name__ == '__main__':
-    test_cryptotrader_1()
+    test_case_1()

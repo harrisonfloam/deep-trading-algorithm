@@ -29,8 +29,8 @@ class TestCryptoTrader(CryptoTrader):
     - test_train_run()
         Train and run with test data
     """
-    def __init__(self, filepath):
-        super().__init__()      # Inherit from parent class
+    def __init__(self, filepath, **kwargs):
+        super().__init__(**kwargs)      # Inherit from parent class
         self.test = True        # Set test flag to true
         self.verbose = True     # Set verbose flag to true
         
