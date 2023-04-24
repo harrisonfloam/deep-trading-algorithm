@@ -113,7 +113,7 @@ class CryptoTrader:
         # Compute the indicators
         data['sma'] = ta.sma(data['close'], length=20)                            # Simple Moving Average
         data['rsi'] = ta.rsi(data['close'], length=14)                            # Relative Strength Index
-        data['macd'], _, _ = ta.macd(data['close'], fast=12, slow=26, signal=9)   # Moving Average  Convergence Divergence
+        data['macd'] = ta.macd(data['close'], fast=12, slow=26, signal=9)['histogram']   # Moving Average  Convergence Divergence   #FIXME: MACD isn't working
 
         data.dropna(inplace=True)  # Drop rows with NaN values
         data.reset_index(drop=True, inplace=True)  # Reset the index
