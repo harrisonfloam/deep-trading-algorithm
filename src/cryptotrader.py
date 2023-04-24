@@ -209,7 +209,7 @@ class CryptoTrader:
                                                    historical_period=historical_period, 
                                                    historical_period_unit=historical_period_unit)
         self.concat_indicators(self.train_data) # Concat_indicators
-
+        self.initialize_model()     # Initialize model
         self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)  # Import cryptomodel?
 
     # Start the live trading loop
