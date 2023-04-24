@@ -44,6 +44,7 @@ class CryptoLSTM(nn.Module):
         self.verbose = verbose  # Verbose debug flag
 
     # Define the forward function
+    # FIXME: Hidden layer is the wrong size? Does training/predicting need different hidden sizes?
     def forward(self, x, hidden):
         out, self.hidden = self.lstm(x, hidden)             # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
