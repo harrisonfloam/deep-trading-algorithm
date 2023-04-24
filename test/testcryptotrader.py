@@ -56,7 +56,7 @@ class TestCryptoTrader(CryptoTrader):
     def test_train(self, batch_size=32, epochs=10, seq_length=10):
         if not self.test: pass  # Pass if not in test mode
 
-        self.get_test_data(self.filepath)
+        self.get_test_data()
         self.test_train_data = self.concat_indicators(self.test_train_data)
 
         self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)

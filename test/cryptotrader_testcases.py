@@ -7,7 +7,7 @@ import unittest
 from testcryptotrader import TestCryptoTrader
 
 # Testing data
-filepath = '/data/btc_daily.csv'
+filepath = 'test/data/btc_daily.csv'
 
 
 def test_case_1():
@@ -32,6 +32,8 @@ def test_case_1():
     }
     
     trader = TestCryptoTrader(**params)
+    
+    trader.test_train(batch_size=32, epochs=10, seq_length=10)
 
 if __name__ == '__main__':
     test_case_1()
