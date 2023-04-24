@@ -42,7 +42,7 @@ class TestCryptoTrader(CryptoTrader):
     def get_test_data(self):
         df = pd.read_csv(self.filepath)  # Read file to dataframe
         df['date'] = pd.to_datetime(df['date'], format="%m/%d/%Y  %H:%M")
-        df = df.set_index('date')   #TODO: Index shows up as only integers
+        df = df.set_index('date')
 
         self.test_train_data, self.test_data = train_test_split(df, test_size=0.2, shuffle=False)
 
