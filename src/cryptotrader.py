@@ -3,7 +3,7 @@
 
 # Import Libraries
 import time
-import cbpro
+import coinbasepro as cbp
 import datetime
 import pandas as pd
 import pandas_ta as ta
@@ -36,8 +36,8 @@ class CryptoTrader:
     - train_run()
         Train the model and start the live trading loop in one call.
     """
-    def __init__(self, initial_balance, trade_interval, run_time, model_class, 
-                 run_time_unit='h', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
+    def __init__(self, initial_balance, trade_interval, run_time, run_time_unit='h', 
+                 model_class='CryptoLSTM', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
                  order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, verbose=False):
         # Initialize trading parameters
         self.product_id = product_id                        # Crypto symbol
@@ -53,7 +53,7 @@ class CryptoTrader:
         # Initialize data and model parameters
         self.model_class = model_class      # Model class
         self.price_data = pd.DataFrame()    # Price dataframe
-        self.model = None                   # LSTM model
+        self.model = None                   # Model
         self.criterion = None               # Model criterion
         self.optimizer = None               # Model optimizer
         self.hidden = None                  # Hidden layers
@@ -115,6 +115,8 @@ class CryptoTrader:
         data.dropna(inplace=True)  # Drop rows with NaN values
         data.reset_index(drop=True, inplace=True)  # Reset the index
 
+        return data
+
     # Update the model using the latest price data
     def update_model(self, data):
         self.model.update_model(data)    # Call update method in CryptoLSTM class
@@ -152,12 +154,12 @@ class CryptoTrader:
     # Execute a buy order using Coinbase API
     #TODO: Move contents to CoinbaseAPI class, just call the method here
     def buy(self, order):
-        auth_client = cbpro.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
+        auth_client = cbp.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
         order = auth_client.place_market_order(product_id=self.product_id, side='buy', funds=order)
 
     # Execute a sell order using Coinbase API
     def sell(self, order):
-        auth_client = cbpro.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
+        auth_client = cbp.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
         order = auth_client.place_market_order(product_id=self.product_id, side='sell', funds=order)
 
     # Execute a trade based on the current trade decision
@@ -205,7 +207,7 @@ class CryptoTrader:
                                                    historical_period_unit=historical_period_unit)
         self.concat_indicators(self.train_data) # Concat_indicators
 
-        self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
+        self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)  # Import cryptomodel?
 
     # Start the live trading loop
     #TODO: Change all time periods to dates instead of "1 months"
