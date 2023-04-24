@@ -3,7 +3,7 @@
 
 # Import Libraries
 import time
-import cbpro
+import coinbasepro as cbp
 import datetime
 import pandas as pd
 import pandas_ta as ta
@@ -154,12 +154,12 @@ class CryptoTrader:
     # Execute a buy order using Coinbase API
     #TODO: Move contents to CoinbaseAPI class, just call the method here
     def buy(self, order):
-        auth_client = cbpro.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
+        auth_client = cbp.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
         order = auth_client.place_market_order(product_id=self.product_id, side='buy', funds=order)
 
     # Execute a sell order using Coinbase API
     def sell(self, order):
-        auth_client = cbpro.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
+        auth_client = cbp.AuthenticatedClient(*self.coinbase_api.get_cb_credentials())
         order = auth_client.place_market_order(product_id=self.product_id, side='sell', funds=order)
 
     # Execute a trade based on the current trade decision
