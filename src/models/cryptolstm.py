@@ -71,6 +71,11 @@ class CryptoLSTM(nn.Module):
             sequences.append(sequence)
             targets.append(target)
 
+        # Convert lists to numpy arrays
+        sequences = np.array(sequences)
+        targets = np.array(targets)
+
+
         # Convert lists to tensors
         sequences = torch.tensor(sequences, dtype=torch.float32)
         targets = torch.tensor(targets, dtype=torch.float32)
