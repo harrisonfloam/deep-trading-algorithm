@@ -5,3 +5,5 @@ __pycache__/
 
 .vscode/*.json
 .vscode/tasks.json
+
+.env
