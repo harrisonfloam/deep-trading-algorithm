@@ -16,3 +16,13 @@ class CryptoModel:
         model_module = __import__('models.' + model_class_name.lower(), fromlist=[model_class_name])
         model_class = getattr(model_module, model_class_name)
         self.model = model_class(**kwargs)
+
+    def train(self, *args, **kwargs):
+        self.model.train(*args, **kwargs)
+
+    def predict(self, *args, **kwargs):
+        self.model.predict(*args, **kwargs)
+
+    def update_model(self, *args, **kwargs):
+        self.model.predict(*args, **kwargs)
+        
