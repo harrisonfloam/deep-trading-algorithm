@@ -86,10 +86,10 @@ class CryptoTrader:
         self.end_time = self.initial_time + run_time_delta
 
     # Define and initialize the model, optimizer, and loss function
-    def initialize_model(self):
-        input_size = len(self.price_data) - 1   # Number of input columns
+    def initialize_model(self, data):
+        input_size = len(data) - 1   # Number of input columns
 
-        self.model = CryptoModel(model_class=self.model_class, input_size=input_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
+        self.model = CryptoModel(model_class_name=self.model_class, input_size=input_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
 
     # Get live data
     def get_live_data(self):
@@ -209,7 +209,7 @@ class CryptoTrader:
                                                    historical_period=historical_period, 
                                                    historical_period_unit=historical_period_unit)
         self.concat_indicators(self.train_data) # Concat_indicators
-        self.initialize_model()     # Initialize model
+        self.initialize_model(self.price_data)     # Initialize model
         self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)  # Import cryptomodel?
 
     # Start the live trading loop

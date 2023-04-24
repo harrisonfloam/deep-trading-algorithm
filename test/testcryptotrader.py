@@ -59,7 +59,7 @@ class TestCryptoTrader(CryptoTrader):
         self.get_test_data()
         self.test_train_data = self.concat_indicators(self.test_train_data)
 
-        self.initialize_model()     # Initialize model
+        self.initialize_model(self.test_train_data)     # Initialize model
 
         self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
 
