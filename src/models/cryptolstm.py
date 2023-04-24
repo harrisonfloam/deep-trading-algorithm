@@ -45,7 +45,7 @@ class CryptoLSTM(nn.Module):
 
     # Define the forward function
     def forward(self, x, hidden):
-        out, self.hidden = self.lstm(x, hidden)                  # Pass input and previous hidden state through LSTM layer
+        out, self.hidden = self.lstm(x, hidden)             # Pass input and previous hidden state through LSTM layer
         out = self.fc1(out[:, -1, :])                       # Pass output of LSTM layer through first fully connected layer
         out = self.sigmoid(out)                             # Apply sigmoid activation function
         out = self.fc2(out)                                 # Pass output of first fully connected layer through second fully connected layer
@@ -92,14 +92,14 @@ class CryptoLSTM(nn.Module):
         dataset = CryptoDataset(sequences, labels)
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
 
-        # Train the model
+        # Train the model``
         for epoch in range(epochs):
             running_loss = 0.0
             for i, data_load in enumerate(dataloader):
                 inputs, labels = data_load
                 self.optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
+                outputs, _ = self(inputs, self.hidden)
+                loss = self.criterion(outputs.squeeze(), labels)
                 loss.backward()
                 self.optimizer.step()
                 running_loss += loss.item()

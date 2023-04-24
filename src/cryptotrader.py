@@ -87,7 +87,7 @@ class CryptoTrader:
 
     # Define and initialize the model, optimizer, and loss function
     def initialize_model(self, data):
-        input_size = len(data) - 1   # Number of input columns
+        input_size = data.shape[1]   # Number of input columns
 
         self.model = CryptoModel(model_class_name=self.model_class, input_size=input_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
 
