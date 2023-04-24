@@ -7,7 +7,7 @@ import unittest
 from testcryptotrader import TestCryptoTrader
 
 # Testing data
-filepath = '/data/btc.csv'
+filepath = '/data/btc_daily.csv'
 
 
 def test_case_1():
