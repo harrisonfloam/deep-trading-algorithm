@@ -35,6 +35,7 @@ Will be updated in future release.
 
 ## VSCode Configuration
 settings.json:
+<pre>
     {
         "python.analysis.autoImportCompletions": true,
         "python.autoComplete.extraPaths": [
@@ -55,6 +56,9 @@ settings.json:
             "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/src",
         }
     }
+</pre>
 
 .env:
+<pre>
     PYTHONPATH=${PYTHONPATH}:./src
+</pre>
