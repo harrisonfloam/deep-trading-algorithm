@@ -29,8 +29,8 @@ class TestCryptoTrader(CryptoTrader):
     - test_train_run()
         Train and run with test data
     """
-    def __init__(self, filepath):
-        super().__init__()      # Inherit from parent class
+    def __init__(self, filepath, **kwargs):
+        super().__init__(**kwargs)      # Inherit from parent class
         self.test = True        # Set test flag to true
         self.verbose = True     # Set verbose flag to true
         
@@ -41,6 +41,8 @@ class TestCryptoTrader(CryptoTrader):
     # Read testing dataset
     def get_test_data(self):
         df = pd.read_csv(self.filepath)  # Read file to dataframe
+        df['date'] = pd.to_datetime(df['date'], format="%m/%d/%Y  %H:%M")
+        df = df.set_index('date')
 
         self.test_train_data, self.test_data = train_test_split(df, test_size=0.2, shuffle=False)
 
@@ -56,8 +58,11 @@ class TestCryptoTrader(CryptoTrader):
     def test_train(self, batch_size=32, epochs=10, seq_length=10):
         if not self.test: pass  # Pass if not in test mode
 
-        self.get_test_data(self.filepath)
+        self.get_test_data()
         self.test_train_data = self.concat_indicators(self.test_train_data)
+
+        self.initialize_model(self.test_train_data)     # Initialize model
+        self.model.verbose = self.verbose   # Toggle verbose flag
 
         self.model.train(data=self.test_train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)
 

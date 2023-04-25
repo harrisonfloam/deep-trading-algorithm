@@ -38,7 +38,7 @@ class CryptoTrader:
     """
     def __init__(self, initial_balance, trade_interval, run_time, run_time_unit='h', 
                  model_class='CryptoLSTM', product_id='BTC', buy_threshold=0.02, sell_threshold=0.02,
-                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, verbose=False):
+                 order_p=0.1, confidence_threshold=0.80, slippage_p=0.005, fees_p=0.005, indicators=True, coinbase_api=CoinbaseAPI, verbose=False):
         # Initialize trading parameters
         self.product_id = product_id                        # Crypto symbol
         self.initial_balance = initial_balance              # Starting balance to trade
@@ -60,7 +60,10 @@ class CryptoTrader:
         self.indicators = indicators        # Indicator toggle
 
         # Initialize Coinbase API parameters
-        self.coinbase_api = CoinbaseAPI(product_id=product_id)
+        if coinbase_api == CoinbaseAPI:
+            self.coinbase_api = CoinbaseAPI(product_id=product_id)
+        else:
+            self.coinbase_api = coinbase_api
 
         # Initialize time parameters
         self.run_time = run_time
@@ -83,10 +86,10 @@ class CryptoTrader:
         self.end_time = self.initial_time + run_time_delta
 
     # Define and initialize the model, optimizer, and loss function
-    def initialize_model(self):
-        input_size = len(self.price_data) - 1   # Number of input columns
+    def initialize_model(self, data):
+        input_size = data.shape[1]   # Number of input columns
 
-        self.model = CryptoModel(model_class=self.model_class, input_size=input_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
+        self.model = CryptoModel(model_class_name=self.model_class, input_size=input_size, hidden_size=128, output_size=1, verbose=self.verbose) # Model instance
 
     # Get live data
     def get_live_data(self):
@@ -110,7 +113,8 @@ class CryptoTrader:
         # Compute the indicators
         data['sma'] = ta.sma(data['close'], length=20)                            # Simple Moving Average
         data['rsi'] = ta.rsi(data['close'], length=14)                            # Relative Strength Index
-        data['macd'], _, _ = ta.macd(data['close'], fast=12, slow=26, signal=9)   # Moving Average  Convergence Divergence
+        macd = ta.macd(data['close'], fast=12, slow=26, signal=9)    # MACD
+        data['macd'] = macd['MACD_12_26_9']
 
         data.dropna(inplace=True)  # Drop rows with NaN values
         data.reset_index(drop=True, inplace=True)  # Reset the index
@@ -206,7 +210,7 @@ class CryptoTrader:
                                                    historical_period=historical_period, 
                                                    historical_period_unit=historical_period_unit)
         self.concat_indicators(self.train_data) # Concat_indicators
-
+        self.initialize_model(self.price_data)     # Initialize model
         self.model.train(data=self.train_data, batch_size=batch_size,epochs=epochs, seq_length=seq_length)  # Import cryptomodel?
 
     # Start the live trading loop
