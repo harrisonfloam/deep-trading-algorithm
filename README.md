@@ -6,15 +6,19 @@ Python project that creates a live trading framework for a chosen cryptocurrency
 
 ## Outline
 - src/
-    - __init__.py
+    - `__init__.py`
     - cryptotrader.py
     - cryptomodel.py
     - coinbase.py
     - model/
         crypto_lstm.py
 - test/
-    - __init__.py
-    - cryptotrader_test.py
+    - `__init__.py`
+    - testcryptotrader.py
+    - cryptotrader_testcases.py
+    - cryptotrader_unitttests.py
+    - data/
+        - btc_daily.csv
 - README.md
 
 ## Usage
@@ -25,3 +29,32 @@ Python project that creates a live trading framework for a chosen cryptocurrency
 ## Notes
 - Training and live data features are current price and indicator values for the previous time step, target is the current price.
 - Trade decisions are made by make_trade_decision method in CryptoTrader class. Trades are made when the predicted price, accounting for estimated slippage and fees, is greater or less than the buy or sell threshold and the confidence of the prediction is greater than the confidence threshold.
+
+## Environment
+Will be updated in future release.
+
+## VSCode Configuration
+settings.json:
+    {
+        "python.analysis.autoImportCompletions": true,
+        "python.autoComplete.extraPaths": [
+            "./src",
+            "./test"
+        ],
+        "python.analysis.extraPaths": [
+            "./src",
+            "./test"
+        ],
+        "terminal.integrated.env.osx": {
+            "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src",
+        },
+        "terminal.integrated.env.linux": {
+            "PYTHONPATH": "${env:PYTHONPATH}:${workspaceFolder}/src",
+        },
+        "terminal.integrated.env.windows": {
+            "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}/src",
+        }
+    }
+
+.env:
+    PYTHONPATH=${PYTHONPATH}:./src
