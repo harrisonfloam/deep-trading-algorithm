@@ -38,6 +38,6 @@ Python project that explores deep learning methods for financial forecasting and
 
 Create a conda environment and activate it.
 ```
-conda env create -f environment.yml
+conda env create -f config/environment.yml
 conda activate time-series
 ```
