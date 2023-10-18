@@ -8,7 +8,24 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 # Import Modules
-from src.data import DataBundle
+# from src.data.data import DataBundle
+
+
+class DataBundle:
+    def __init__(self, data=None, train=None, test=None, val=None, scaler=None):
+        self.data = data
+        self.train = train
+        self.test = test
+        self.val = val
+        self.scaler = scaler
+    
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(self, key, value)
+                
+    def get_bundle(self):
+        return self.train, self.test, self.val
 
 def to_datetime_index(df, index_col):
     """Converts a dataframe's index into a datetime index
@@ -42,7 +59,7 @@ def train_test_val_split(input, test_percent, val_percent):
 def scale_data(databundle, exclude_columns): 
     """Scales train, test, and val dataframes held in a databundle. Scaler is fit to train set.
     """
-    train, test, val = input.get_bundle()
+    train, test, val = databundle.get_bundle()
     for col in train.columns:
         if col in exclude_columns:
             continue

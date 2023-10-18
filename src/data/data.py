@@ -15,24 +15,8 @@ from sklearn.linear_model import LinearRegression
 
 # Import modules
 from src.utils import get_project_root
-from src.data.utils import forward_backward_fill, to_datetime_index, train_test_val_split, scale_data, unscale_data
+from src.data.utils import forward_backward_fill, to_datetime_index, train_test_val_split, scale_data, unscale_data, DataBundle
 
-
-class DataBundle:
-    def __init__(self, data=None, train=None, test=None, val=None, scaler=None):
-        self.data = data
-        self.train = train
-        self.test = test
-        self.val = val
-        self.scaler = scaler
-    
-    def update(self, **kwargs):
-        for key, value in kwargs.items():
-            if value is not None:
-                setattr(self, key, value)
-                
-    def get_bundle(self):
-        return self.train, self.test, self.val
 
 class DataProcessor:
     def __init__(self, start, end, verbose=False):
@@ -95,14 +79,14 @@ class DataProcessor:
         
     def detrend_data(self, databundle, exclude_columns):
         train, test, val = databundle.get_bundle()
-        for col in self.data.columns:
+        for col in train.columns:
             if col in exclude_columns:
                 continue
             linreg = LinearRegression()
             for subset in [train, test, val]:
                 x = np.arange(len(subset)).reshape(-1, 1)
                 y = subset[col].values
-                if subset == train:
+                if subset is train:
                     linreg.fit(x, y)
                 trend = linreg.predict(x)
                 subset[col] = subset[col].values - trend
@@ -116,15 +100,17 @@ class DataProcessor:
         self.split_data(databundle)
         self.detrend_data(databundle=databundle, exclude_columns=exclude_columns_detrend)
         self.scale_data(databundle=databundle, exclude_columns=exclude_columns_scale)
+        self.databundle = databundle
         
     def create_dataloaders(self, window, batch_size, exclude_input_columns):
-        train_loader = TimeSeriesDataLoader(df=self.train, window=window, 
+        train, test, val = self.databundle.get_bundle()
+        train_loader = TimeSeriesDataLoader(df=train, window=window, 
                                             batch_size=batch_size, 
                                             exclude_input_columns=exclude_input_columns).create_dataloader()
-        val_loader = TimeSeriesDataLoader(df=self.val, window=window, 
+        val_loader = TimeSeriesDataLoader(df=val, window=window, 
                                           batch_size=batch_size, 
                                           exclude_input_columns=exclude_input_columns).create_dataloader()
-        test_loader = TimeSeriesDataLoader(df=self.test, window=window, 
+        test_loader = TimeSeriesDataLoader(df=test, window=window, 
                                            batch_size=batch_size, 
                                            exclude_input_columns=exclude_input_columns).create_dataloader()
         return train_loader, val_loader, test_loader
