@@ -13,10 +13,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, QuantileTransformer, RobustScaler, StandardScaler
 from sklearn.linear_model import LinearRegression
 
+# Import modules
+from src.utils import get_project_root
+
 
 class DataProcessor:
-    def __init__(self, path="data/bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv", start='2021-03-27 15:04:00', end='2021-03-31 00:00:00', verbose=False):
-        self.path = path    # Filepath of data
+    def __init__(self, filename="bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv", start='2021-03-27 15:04:00', end='2021-03-31 00:00:00', verbose=False):
+        self.filename = filename
+        self.path = os.path.join(get_project_root(), 'data', filename)    # Filepath of data
         self.start = start
         self.end = end
         self.verbose = verbose
@@ -24,6 +28,8 @@ class DataProcessor:
     def load_data(self):
         # Import Data
         self.data = pd.read_csv(self.path)
+        if self.verbose:
+            print(f'Data loaded --------- data/{self.filename}')
 
     def clean_data(self):
         # Clean data
@@ -57,8 +63,7 @@ class DataProcessor:
         self.data = self.data.loc[start:end]
 
         if self.verbose:
-            print(f'Data loaded --------- {self.path}')
-            print(f'Using data from {start} to {end} with {len(self.data)-1} rows')
+            print(f'Using data from {start} to {end} with {len(self.data)-1} rows and {len(self.data.columns)} columns')
 
     def split_data(self):
         # Split data
