@@ -2,7 +2,7 @@
 
 Work in progress.
 
-Python project that explores deep learning methods for financial forecasting and trading.
+A Python project that explores deep learning methods for financial forecasting and trading.
 
 ## Outline
 
