@@ -103,12 +103,14 @@ class DataProcessor:
         self.databundle = databundle
         
     def create_dataloaders(self, window, batch_size, exclude_input_columns):
-        loaders = {}
-        for subset in self.databundle.get_bundle():
-            loader = TimeSeriesDataLoader(df=subset, window=window, batch_size=batch_size, 
+        train, test, val = self.databundle.get_bundle()
+        train_loader = TimeSeriesDataLoader(df=train, window=window, batch_size=batch_size, 
                                             exclude_input_columns=exclude_input_columns)
-            loaders[subset] = loader
-        return loaders['train'], loaders['test'], loaders['val']
+        test_loader = TimeSeriesDataLoader(df=test, window=window, batch_size=batch_size, 
+                                            exclude_input_columns=exclude_input_columns)
+        val_loader = TimeSeriesDataLoader(df=val, window=window, batch_size=batch_size, 
+                                            exclude_input_columns=exclude_input_columns)
+        return train_loader, test_loader, val_loader
 
     
 class TimeSeriesDataset(Dataset):
@@ -129,11 +131,5 @@ class TimeSeriesDataset(Dataset):
     
 class TimeSeriesDataLoader(DataLoader):  # Inherits from DataLoader
     def __init__(self, df, window, batch_size, exclude_input_columns=['']):
-        self.df = df
-        self.window = window
-        self.batch_size = batch_size
-        self.exclude_input_columns = exclude_input_columns
-        dataset = TimeSeriesDataset(df=self.df, window=self.window, exclude_input_columns=self.exclude_input_columns)
-        
-        # Initialize the DataLoader with the dataset
-        super(TimeSeriesDataLoader, self).__init__(dataset, batch_size=self.batch_size, shuffle=False)
+        dataset = TimeSeriesDataset(df=df, window=window, exclude_input_columns=exclude_input_columns)
+        super(TimeSeriesDataLoader, self).__init__(dataset, batch_size=batch_size, shuffle=False)
