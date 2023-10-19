@@ -45,19 +45,22 @@ class TrainingState:
                 raise AttributeError(f"{self.__class__.__name__} object has no attribute {attr}")
 
 class EarlyStopping:
-    def __init__(self, no_change_patience, overfit_patience, warmup):
+    def __init__(self, no_change_patience, overfit_patience, warmup, verbose=False):
         self.best_val_loss = float('inf')
         self.no_change_count = 0
         self.overfit_count = 0
         self.no_change_patience = no_change_patience
         self.overfit_patience = overfit_patience
         self.warmup = warmup
+        self.verbose = verbose
 
     def should_stop(self, state):
         stop = False
+        new_best = False
         if state.val_loss < self.best_val_loss:
             self.best_val_loss = state.val_loss
             self.no_change_count = 0
+            new_best = True
         else:
             self.no_change_count += 1
 
@@ -75,9 +78,12 @@ class EarlyStopping:
                 reason = "overfitting"
                 
         if stop:
-            print(f"Early stopping due to {reason}.")
+            if self.verbose:
+                print(f"Early stopping due to {reason}.")
+            else:
+                pass
         
-        return stop
+        return stop, new_best
     
 class TensorBoardLogger:
     def __init__(self, use_tensorboard):

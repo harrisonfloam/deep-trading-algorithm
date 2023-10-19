@@ -12,7 +12,7 @@ from torchinfo import summary
 from tqdm.autonotebook import tqdm
 
 # Import Modules
-from src.train.utils import plot_data, plot_learning_curves, start_tensorboard, stop_tensorboard, save_model, load_model
+from src.train.utils import plot_data, plot_learning_curves, save_model, load_model
 from src.utils import print_to_console, update_progress
 
 from train.utils import EarlyStopping, TensorBoardLogger, TrainingState
@@ -54,7 +54,7 @@ class Trainer:
         self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
         self.early_stopper = EarlyStopping(no_change_patience=no_change_patience,
                                            overfit_patience=overfit_patience,
-                                           warmup=warmup)
+                                           warmup=warmup, verbose=self.verbose)
         self.state = TrainingState()
 
         # Logging
@@ -91,7 +91,7 @@ class Trainer:
             self.state.update(epoch=epoch, elapsed_time=elapsed_time, mean_loss_epoch=mean_loss_epoch)   # Update state
             
             # Validation loop
-            val_loss = self.evaluate_model(val_loader, show_progress=False)
+            val_loss = self.evaluate(val_loader, show_progress=False)
             self.scheduler.step(val_loss)    # Learning rate scheduler step
             self.state.update(val_loss=val_loss)    # Update state
             
@@ -99,12 +99,12 @@ class Trainer:
             self.tensorboard_logger.log_loss(self.state)
             self.tensorboard_logger.log_params_grads(model=self.model, epoch=epoch)
             
-            # Early stopping
-            if self.early_stopper.should_stop(self.state):
+            # Early stopping and model saving
+            stop, new_best = self.early_stopper.should_stop(self.state)
+            if new_best:
+                save_model(model=self.model, filename=self.model_name)            
+            if stop:
                 break
-            
-        # Save learning data
-        #TODO: save model...
 
     def evaluate(self, loader, show_progress=True):
         print_to_console(mode='val', model_name=self.model_name, verbose=self.verbose, show_progress=show_progress)
