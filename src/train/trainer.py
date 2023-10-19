@@ -11,9 +11,11 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchinfo import summary
 from tqdm.autonotebook import tqdm
 
+# Import Modules
+from src.train.utils import plot_data, plot_learning_curves, start_tensorboard, stop_tensorboard, save_model, load_model
+from src.utils import update_progress
 
-# TODO: 1. Move plotting functions to a separate utility module like /src/utils/plotting.py.
-# TODO: 2. Move the predict function to a separate module like /predict/predictor.py.
+
 # TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
 # TODO: 4. Pass a configuration dictionary or object to the Trainer constructor to simplify parameter management.
 # TODO: 5. Add docstrings to explain the purpose and functionality of each method.
@@ -85,7 +87,7 @@ class Trainer:
             start_time = time.time()
 
             for i, (x, y) in enumerate(train_loader):
-                tqdm_epochs.set_description_str(desc=f"Batch [{i+1}/{len(train_loader)}]\t")
+                update_progress(tqdm_instance=tqdm_epochs, mode='train', section='desc', content=[i, train_loader])
                 
                 x, y = x.to(self.device), y.to(self.device)
 
@@ -99,12 +101,8 @@ class Trainer:
                 self.optimizer.step()
                 batch_losses.append(loss.item())
                 
-                postfix_str = (
-                    f"Batch Loss: {loss.item():.4g} ({np.mean(batch_losses):.4g})\t"
-                    f"Loss: {mean_loss_epoch:.4g} ({mean_loss_training:.4g})\t"
-                    f"Val Loss: {val_loss:.4g} ({mean_loss_val:.4g})"
-                )
-                tqdm_epochs.set_postfix_str(postfix_str)
+                update_progress(tqdm_instance=tqdm_epochs, mode='train', section='postfix',
+                                content=[loss, batch_losses, mean_loss_epoch, mean_loss_training, val_loss, mean_loss_val])
 
             elapsed_time = time.time() - start_time
             train_elapsed_time += elapsed_time
@@ -120,7 +118,7 @@ class Trainer:
             
             if self.use_tensorboard:
                 # Log scalar values - TensorBoard
-                self.writer.add_scalar('Training Loss', mean_loss_epoch, epoch)
+                self.writer.add_scalar('Training Loss', mean_loss_epoch, epoch) #BUG
                 self.writer.add_scalar('Validation Loss', val_loss, epoch)
                 
                 # Log model parameters and gradients - TensorBoard
@@ -133,7 +131,7 @@ class Trainer:
                 best_val_loss = val_loss
                 no_improvement_count = 0
                 if save_best:
-                    self.save_model(model_path=f"saved_models/{self.model_name}.pth")
+                    self.save_model(model_path=f"saved_models/{self.model_name}.pth")   #BUG
             else:
                 no_improvement_count += 1
 
