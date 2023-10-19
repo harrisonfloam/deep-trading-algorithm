@@ -11,6 +11,8 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchinfo import summary
 from tqdm.autonotebook import tqdm
 
+from train.utils import EarlyStopping
+
 
 # TODO: 1. Move plotting functions to a separate utility module like /src/utils/plotting.py.
 # TODO: 2. Move the predict function to a separate module like /predict/predictor.py.
@@ -50,13 +52,13 @@ class Trainer:
         self.lr = lr
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
         scheduler = ReduceLROnPlateau(self.optimizer, 'min')
-        self.no_change_patience = no_change_patience
-        self.overfit_patience = overfit_patience
         self.model = self.model.to(self.device)
-        self.warmup = warmup
+        self.early_stopper = EarlyStopping(no_change_patience=no_change_patience,
+                                           overfit_patience=overfit_patience,
+                                           warmup=warmup)
 
         self.train_loader = train_loader
-        # self.val_loader = val_loader
+        self.val_loader = val_loader
 
         if self.verbose:
             print(f'Training --------- Model: {self.model_name}')
@@ -68,9 +70,6 @@ class Trainer:
         val_losses = []
         
         train_elapsed_time = 0
-        best_val_loss = float('inf')  # Initialize best validation loss
-        no_improvement_count = 0  # Counter for early stopping
-        overfit_count = 0
         mean_loss_epoch = 0
         mean_loss_training = 0
         mean_loss_val = 0
@@ -128,26 +127,9 @@ class Trainer:
                     self.writer.add_histogram(name, param, epoch)
                     self.writer.add_histogram(f"{name}.grad", param.grad, epoch)
             
-            # Early stopping logic for no improvement
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                no_improvement_count = 0
-                if save_best:
-                    self.save_model(model_path=f"saved_models/{self.model_name}.pth")
-            else:
-                no_improvement_count += 1
-
-            # Early stopping logic for overfitting
-            if mean_loss_val > mean_loss_epoch:
-                overfit_count += 1
-            else:
-                overfit_count = 0  # Reset if not overfitting
-            
-            if epoch >= self.warmup:
-                if no_improvement_count >= no_change_patience or overfit_count >= overfit_patience:
-                    reason = "no improvement in validation loss" if no_improvement_count >= no_change_patience else "overfitting"
-                    print(f"Early stopping due to {reason}.")
-                    break
+            # Early stopping
+            if self.early_stopper.should_stop(val_loss, mean_loss_val, mean_loss_epoch, epoch):
+                break
             
         # Save learning data
         self.train_losses = train_losses

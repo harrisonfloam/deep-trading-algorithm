@@ -14,6 +14,41 @@ import subprocess
 from src.utils import get_project_root
 
 
+class EarlyStopping:
+    def __init__(self, no_change_patience, overfit_patience, warmup):
+        self.best_val_loss = float('inf')
+        self.no_change_count = 0
+        self.overfit_count = 0
+        self.no_change_patience = no_change_patience
+        self.overfit_patience = overfit_patience
+        self.warmup = warmup
+
+    def should_stop(self, val_loss, mean_loss_val, mean_loss_epoch, epoch):
+        stop = False
+        if val_loss < self.best_val_loss:
+            self.best_val_loss = val_loss
+            self.no_change_count = 0
+        else:
+            self.no_change_count += 1
+
+        if mean_loss_val > mean_loss_epoch:
+            self.overfit_count += 1
+        else:
+            self.overfit_count = 0
+
+        if epoch >= self.warmup:
+            if self.no_change_count >= self.no_change_patience:
+                stop = True
+                reason = "no improvement in validation loss"
+            elif self.overfit_count >= self.overfit_patience:
+                stop = True
+                reason = "overfitting"
+                
+        if stop:
+            print(f"Early stopping due to {reason}.")
+        
+        return stop
+
 def plot_data(actual, predicted, set_name, loss, column_to_plot, xlim=None, ylim=None):
     # Ensure column_to_plot is a list
     if not isinstance(column_to_plot, list):
