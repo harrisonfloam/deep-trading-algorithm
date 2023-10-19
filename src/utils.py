@@ -33,11 +33,12 @@ def update_progress(tqdm_instance, mode, section, content):
             
         tqdm_instance.set_postfix_str(content_str)
         
-def print_to_console(verbose, mode, model_name):
+def print_to_console(mode, model_name, verbose, show_progress=True):
     if verbose:
         if mode == 'train':
             print(f'Training --------- Model: {model_name}')
         if mode == 'val':
-            print(f'Validating --------- Model: {model_name}')
+            if show_progress:
+                print(f'Validating --------- Model: {model_name}')
         if mode == 'predict':
             print(f'Predicting --------- Model: {model_name}')

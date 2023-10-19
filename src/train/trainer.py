@@ -110,7 +110,7 @@ class Trainer:
             mean_loss_training = np.mean(train_losses)
             
             # Validation loop
-            val_loss = self.evaluate_model(val_loader)
+            val_loss = self.evaluate_model(val_loader, show_progress=False)
             val_losses.append(val_loss)
             mean_loss_val = np.mean(val_losses)
             scheduler.step(val_loss)    # Learning rate scheduler step
@@ -157,22 +157,18 @@ class Trainer:
             self.writer.close()
 
     def evaluate_model(self, loader, show_progress=True):
+        # Logging
+        print_to_console(mode='val', model_name=self.model_name, verbose=self.verbose, show_progress=show_progress)
+        tqdm_batches = tqdm(loader, disable=not (self.verbose and show_progress))
+
         self.model.eval()  # Set model to evaluation mode
-        start_time = time.time()
-
-        print_to_console(verbose=True, mode='val', model_name=self.model_name)
-        
-        tqdm_batches = tqdm(loader, disable=not (self.verbose and show_progress))    # Progress bar
-
         total_loss = 0.0
+        start_time = time.time()
         with torch.no_grad():
             for i, (x, y) in enumerate(tqdm_batches):
-                x, y = x.to(self.device), y.to(self.device)
-
+                x, y = x.to(self.device), y.to(self.device) # Move tensors to device
                 outputs = self.model(x).squeeze()  # Forward pass
-
                 loss = self.criterion(outputs, y)  # Compute loss
-
                 total_loss += loss.item()
                 mean_loss_epoch = total_loss/(i + 1)
                 
@@ -182,8 +178,5 @@ class Trainer:
         elapsed_time = time.time() - start_time
 
         mean_loss = total_loss / len(loader)
-
-        # if self.verbose:
-        #     t.set_description(f'Loss: {mean_loss:.4f}, Time Elapsed: {elapsed_time:.2f}s')
 
         return mean_loss
