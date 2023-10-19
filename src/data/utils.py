@@ -68,6 +68,7 @@ def scale_data(databundle, exclude_columns):
             scaler = percent_ret_scaler
         else:
             scaler = MinMaxScaler(feature_range=(0, 1))
+            percent_ret_scaler = None
             
         train[col] = scaler.fit_transform(train[col].values.reshape(-1, 1))
         val[col] = scaler.transform(val[col].values.reshape(-1, 1))
