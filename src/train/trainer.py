@@ -15,7 +15,7 @@ from tqdm.autonotebook import tqdm
 from src.train.utils import plot_data, plot_learning_curves, start_tensorboard, stop_tensorboard, save_model, load_model
 from src.utils import print_to_console, update_progress
 
-from train.utils import EarlyStopping
+from train.utils import EarlyStopping, TensorBoardLogger
 
 
 # TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
@@ -47,6 +47,12 @@ class Trainer:
         self.running_in_colab = running_in_colab
         self.use_TPU = use_TPU
         self.use_tensorboard = use_tensorboard
+        
+        # Logging
+        self.tensorboard_logger = TensorBoardLogger(self.use_tensorboard)
+        
+    def __del__(self):
+        self.tensorboard_logger.stop()
 
     def train_model(self, train_loader, val_loader, epochs, lr, no_change_patience, overfit_patience, warmup, save_best=False):
         # Training Parameters
@@ -114,15 +120,9 @@ class Trainer:
             mean_loss_val = np.mean(val_losses)
             scheduler.step(val_loss)    # Learning rate scheduler step
             
-            if self.use_tensorboard:
-                # Log scalar values - TensorBoard
-                self.writer.add_scalar('Training Loss', mean_loss_epoch, epoch) #BUG
-                self.writer.add_scalar('Validation Loss', val_loss, epoch)
-                
-                # Log model parameters and gradients - TensorBoard
-                for name, param in self.model.named_parameters():
-                    self.writer.add_histogram(name, param, epoch)
-                    self.writer.add_histogram(f"{name}.grad", param.grad, epoch)
+            # Tensorboard logging
+            self.tensorboard_logger.log_loss(train_loss=mean_loss_epoch, val_loss=val_loss, epoch=epoch)
+            self.tensorboard_logger.log_params_grads(model=self.model, epoch=epoch)
             
             # Early stopping
             if self.early_stopper.should_stop(val_loss, mean_loss_val, mean_loss_epoch, epoch):
@@ -131,12 +131,7 @@ class Trainer:
         # Save learning data
         self.train_losses = train_losses
         self.val_losses = val_losses
-        if self.verbose:
-            print(f'Total Train Time: {train_elapsed_time:.2f}s, Avg Epoch: {train_elapsed_time/epochs:.2f}s')
-        
-        # Close TensorBoard writer
-        if self.use_tensorboard:
-            self.writer.close()
+        #TODO: save model...
 
     def evaluate_model(self, loader, show_progress=True):
         # Logging

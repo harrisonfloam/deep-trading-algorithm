@@ -49,6 +49,41 @@ class EarlyStopping:
             print(f"Early stopping due to {reason}.")
         
         return stop
+    
+class TensorBoardLogger:
+    def __init__(self, use_tensorboard):
+        self.writer = None
+        self.process = None
+        self.use_tensorboard = use_tensorboard
+        if self.use_tensorboard:
+            self.start()
+
+    def start(self):
+        """Start the TensorBoard process and SummaryWriter"""
+        if self.use_tensorboard:
+            log_dir = os.path.join(get_project_root(), 'logs/tensorboard')
+            tensorboard_cmd = f"tensorboard --logdir={log_dir}"
+            self.writer = SummaryWriter(self.log_dir)
+            self.process = subprocess.Popen(tensorboard_cmd.split())
+        
+    def log_loss(self, train_loss, val_loss, epoch):
+        """Log the training loss."""
+        if self.use_tensorboard:
+            self.writer.add_scalars({'Training Loss': train_loss, 'Validation Loss': val_loss}, epoch)
+        
+    def log_params_grads(self, model, epoch):
+        """Log model parameters and gradients."""
+        if self.use_tensorboard:
+            for name, param in model.named_parameters():
+                self.writer.add_histogram(name, param, epoch)
+                self.writer.add_histogram(f"{name}.grad", param.grad, epoch)
+
+    def stop(self):
+        """Terminate the TensorBoard process."""
+        if self.process:
+            self.process.terminate()
+        if self.writer:
+            self.writer.close()
 
 def plot_data(actual, predicted, set_name, loss, column_to_plot, xlim=None, ylim=None):
     # Ensure column_to_plot is a list
@@ -113,17 +148,6 @@ def plot_learning_curves(train_losses, val_losses):
     plt.grid(True)
     
     plt.show()
-    
-def start_tensorboard():
-    log_dir = os.path.join(get_project_root(), 'logs/tensorboard')
-    tensorboard_cmd = f"tensorboard --logdir={log_dir}"
-    writer = SummaryWriter(log_dir)
-    process = subprocess.Popen(tensorboard_cmd.split())
-    return process, writer
-
-def stop_tensorboard(tensorboard_process):
-    if tensorboard_process:
-        tensorboard_process.terminate()
         
 def save_model(model, filename):
     #TODO: save optimizer, loss, epoch...
