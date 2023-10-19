@@ -86,10 +86,11 @@ class EarlyStopping:
         return stop, new_best
     
 class TensorBoardLogger:
-    def __init__(self, use_tensorboard):
+    def __init__(self, use_tensorboard, verbose):
         self.writer = None
         self.process = None
         self.use_tensorboard = use_tensorboard
+        self.verbose = verbose
         if self.use_tensorboard:
             self.start()
 
@@ -116,10 +117,23 @@ class TensorBoardLogger:
 
     def stop(self):
         """Terminate the TensorBoard process."""
+        running = False
         if self.process:
             self.process.terminate()
+            runng = True
         if self.writer:
             self.writer.close()
+            runng = True
+        if running:
+            print("Tensorboard closed successfully.")
+            
+def auto_close_tensorboard(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        finally:
+            args[0].tensorboard_logger.stop()  # Assuming 'self' is the first argument
+    return wrapper
 
 def plot_data(actual, predicted, set_name, loss, column_to_plot, xlim=None, ylim=None):
     # Ensure column_to_plot is a list

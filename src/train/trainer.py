@@ -12,7 +12,7 @@ from torchinfo import summary
 from tqdm.autonotebook import tqdm
 
 # Import Modules
-from src.train.utils import EarlyStopping, TensorBoardLogger, TrainingState, plot_data, plot_learning_curves, save_model, load_model
+from src.train.utils import EarlyStopping, TensorBoardLogger, TrainingState, auto_close_tensorboard, plot_data, plot_learning_curves, save_model, load_model
 from src.utils import print_to_console, update_progress
 
 
@@ -38,11 +38,12 @@ class Trainer:
         self.use_tensorboard = use_tensorboard
         
         # Logging
-        self.tensorboard_logger = TensorBoardLogger(self.use_tensorboard)
+        self.tensorboard_logger = TensorBoardLogger(self.use_tensorboard, verbose=self.verbose)
         
     def __del__(self):
         self.tensorboard_logger.stop()
 
+    @auto_close_tensorboard
     def train(self, train_loader, val_loader, epochs, lr, no_change_patience, overfit_patience, warmup, save_best=False):
         # Training Parameters
         self.epochs = epochs
