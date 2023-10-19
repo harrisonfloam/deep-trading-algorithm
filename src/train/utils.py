@@ -104,7 +104,8 @@ class TensorBoardLogger:
     def log_loss(self, state):
         """Log the training loss."""
         if self.use_tensorboard:
-            self.writer.add_scalars('Loss', {'Training Loss': state.mean_loss_epoch, 'Validation Loss': state.val_loss}, state.epoch)
+            self.writer.add_scalar('Training Loss', state.mean_loss_epoch, state.epoch)
+            self.writer.add_scalar('Validation Loss', state.val_loss, state.epoch)
         
     def log_params_grads(self, model, epoch):
         """Log model parameters and gradients."""
