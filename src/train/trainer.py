@@ -18,15 +18,6 @@ from src.utils import print_to_console, update_progress
 from train.utils import EarlyStopping, TensorBoardLogger, TrainingState
 
 
-# TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
-# TODO: 4. Pass a configuration dictionary or object to the Trainer constructor to simplify parameter management.
-# TODO: 5. Add docstrings to explain the purpose and functionality of each method.
-# TODO: 6. Encapsulate early stopping logic into its own method.
-# TODO: 7. Make variable names more descriptive for better readability (e.g., lr, no_change_patience, etc.).
-# TODO: 8. Encapsulate model state saving and loading logic into separate methods or a separate class.
-# TODO: 9. Allow the choice of optimizer and scheduler to be passed as arguments or included in a configuration object.
-
-
 class Trainer:
     def __init__(self,
                  model,
