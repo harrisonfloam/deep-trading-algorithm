@@ -120,10 +120,10 @@ class TensorBoardLogger:
         running = False
         if self.process:
             self.process.terminate()
-            runng = True
+            running = True
         if self.writer:
             self.writer.close()
-            runng = True
+            running = True
         if running:
             print("Tensorboard closed successfully.")
             
