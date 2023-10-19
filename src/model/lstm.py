@@ -7,10 +7,6 @@ import torch
 import torch.nn as nn
 
 
-# Import Libraries
-import torch
-import torch.nn as nn
-
 class LSTM(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers, fc_hidden_dim, use_hn, dropout, maintain_state=False):
         super(LSTM, self).__init__()
