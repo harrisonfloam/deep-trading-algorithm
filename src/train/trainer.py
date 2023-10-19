@@ -1,5 +1,5 @@
 """
-Data Processing and Loading for deep-trading-algorithim
+Trainer class definition
 """
 
 # Import Libraries
@@ -14,6 +14,17 @@ from torchinfo import summary
 from tqdm.autonotebook import tqdm
 from torch.utils.tensorboard import SummaryWriter
 import subprocess
+
+
+# TODO: 1. Move plotting functions to a separate utility module like /src/utils/plotting.py.
+# TODO: 2. Move the predict function to a separate module like /predict/predictor.py.
+# TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
+# TODO: 4. Pass a configuration dictionary or object to the Trainer constructor to simplify parameter management.
+# TODO: 5. Add docstrings to explain the purpose and functionality of each method.
+# TODO: 6. Encapsulate early stopping logic into its own method.
+# TODO: 7. Make variable names more descriptive for better readability (e.g., lr, no_change_patience, etc.).
+# TODO: 8. Encapsulate model state saving and loading logic into separate methods or a separate class.
+# TODO: 9. Allow the choice of optimizer and scheduler to be passed as arguments or included in a configuration object.
 
 
 class Trainer:
@@ -183,34 +194,6 @@ class Trainer:
         #     t.set_description(f'Loss: {mean_loss:.4f}, Time Elapsed: {elapsed_time:.2f}s')
 
         return mean_loss
-
-    def predict(self, loader, output_as_df=False):
-        self.model.eval()  # Set model to evaluation mode
-        start_time = time.time()
-
-        if self.verbose:
-            print(f'Predicting --------- Model: {self.model_name}')
-        
-        t = tqdm(loader, disable=not self.verbose, desc='Predicting')   # Progress bar
-
-        predictions = torch.tensor([], device=self.device)
-        timestamps = []
-        with torch.no_grad():
-            for i, (x, _) in enumerate(t):
-                x = x.to(self.device)
-                outputs = self.model(x).squeeze()  # Forward pass
-
-                predictions = torch.cat((predictions, outputs), dim=0)
-        elapsed_time = time.time() - start_time
-
-        if self.verbose:
-            print(f'Time Elapsed: {elapsed_time:.2f}s')
-        
-        if output_as_df:
-            shifted_timestamps = loader.dataset.df.index[loader.dataset.window: loader.dataset.window + len(predictions)]
-            return pd.DataFrame({'Timestamp': shifted_timestamps, 'percent_ret': predictions.cpu().numpy()}).set_index('Timestamp')
-
-        return predictions
 
     def plot_data(self, actual, predicted, set_name, loss, column_to_plot, xlim=None, ylim=None):
         
