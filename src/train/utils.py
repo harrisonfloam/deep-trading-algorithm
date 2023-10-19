@@ -6,6 +6,7 @@ Utility functions for training
 import os
 import torch
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 import subprocess
@@ -14,6 +15,34 @@ from tqdm.autonotebook import tqdm
 # Import Modules
 from src.utils import get_project_root
 
+
+class TrainingState:
+    def __init__(self):
+        
+        self.train_losses = []
+        self.val_losses = []
+        self.epoch = 0
+        self.elapsed_time = 0
+        self.train_elapsed_time = 0
+        self.mean_loss_epoch = 0
+        self.mean_loss_training = 0
+        self.mean_loss_val = 0
+        self.val_loss = 0
+        
+    def update(self, **kwargs):
+        for attr, value in kwargs.items():
+            if hasattr(self, attr):
+                if attr == "mean_loss_epoch":
+                    self.train_losses.append(value)
+                    self.mean_loss_training = np.mean(self.train_losses)
+                if attr == "val_loss":
+                    self.val_losses.append(value)
+                    self.mean_loss_val = np.mean(self.val_losses)
+                if attr == "elapsed_time":
+                    self.train_elapsed_time += value
+                setattr(self, attr, value)
+            else:
+                raise AttributeError(f"{self.__class__.__name__} object has no attribute {attr}")
 
 class EarlyStopping:
     def __init__(self, no_change_patience, overfit_patience, warmup):
@@ -24,20 +53,20 @@ class EarlyStopping:
         self.overfit_patience = overfit_patience
         self.warmup = warmup
 
-    def should_stop(self, val_loss, mean_loss_val, mean_loss_epoch, epoch):
+    def should_stop(self, state):
         stop = False
-        if val_loss < self.best_val_loss:
-            self.best_val_loss = val_loss
+        if state.val_loss < self.best_val_loss:
+            self.best_val_loss = state.val_loss
             self.no_change_count = 0
         else:
             self.no_change_count += 1
 
-        if mean_loss_val > mean_loss_epoch:
+        if state.mean_loss_val > state.mean_loss_epoch:
             self.overfit_count += 1
         else:
             self.overfit_count = 0
 
-        if epoch >= self.warmup:
+        if state.epoch >= self.warmup:
             if self.no_change_count >= self.no_change_patience:
                 stop = True
                 reason = "no improvement in validation loss"
@@ -66,10 +95,10 @@ class TensorBoardLogger:
             self.writer = SummaryWriter(self.log_dir)
             self.process = subprocess.Popen(tensorboard_cmd.split())
         
-    def log_loss(self, train_loss, val_loss, epoch):
+    def log_loss(self, state):
         """Log the training loss."""
         if self.use_tensorboard:
-            self.writer.add_scalars({'Training Loss': train_loss, 'Validation Loss': val_loss}, epoch)
+            self.writer.add_scalars({'Training Loss': state.mean_loss_epoch, 'Validation Loss': state.val_loss}, state.epoch)
         
     def log_params_grads(self, model, epoch):
         """Log model parameters and gradients."""

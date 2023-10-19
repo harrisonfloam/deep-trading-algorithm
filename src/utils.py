@@ -23,8 +23,8 @@ def update_progress(tqdm_instance, mode, section, content):
         if mode == 'train':
             content_str = (
                     f"Batch Loss: {content[0].item():.4g} ({np.mean(content[1]):.4g})\t"
-                    f"Loss: {content[2]:.4g} ({content[3]:.4g})\t"
-                    f"Val Loss: {content[4]:.4g} ({content[5]:.4g})"
+                    f"Loss: {content[2].mean_loss_epoch:.4g} ({content[2].mean_loss_training:.4g})\t"
+                    f"Val Loss: {content[2].val_loss:.4g} ({content[2].mean_loss_val:.4g})"
                     )
         if mode == 'val':
             content_str = f"Loss: {content[0].item():.4g} ({content[1]})"

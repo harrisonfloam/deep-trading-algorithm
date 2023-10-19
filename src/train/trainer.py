@@ -15,7 +15,7 @@ from tqdm.autonotebook import tqdm
 from src.train.utils import plot_data, plot_learning_curves, start_tensorboard, stop_tensorboard, save_model, load_model
 from src.utils import print_to_console, update_progress
 
-from train.utils import EarlyStopping, TensorBoardLogger
+from train.utils import EarlyStopping, TensorBoardLogger, TrainingState
 
 
 # TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
@@ -58,33 +58,19 @@ class Trainer:
         # Training Parameters
         self.epochs = epochs
         self.lr = lr
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
-        scheduler = ReduceLROnPlateau(self.optimizer, 'min')
         self.model = self.model.to(self.device)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=lr)
+        self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
         self.early_stopper = EarlyStopping(no_change_patience=no_change_patience,
                                            overfit_patience=overfit_patience,
                                            warmup=warmup)
+        self.state = TrainingState()
 
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-
+        # Logging
         print_to_console(verbose=self.verbose, mode='train', model_name=self.model_name)
-            
-        if self.use_tensorboard:
-            self.tensorboard_process = self.start_tensorboard()
-
-        train_losses = []
-        val_losses = []
-        
-        train_elapsed_time = 0
-        mean_loss_epoch = 0
-        mean_loss_training = 0
-        mean_loss_val = 0
-        val_loss = 0
-        elapsed_time = 0
-
         tqdm_epochs = tqdm(range(epochs), disable=not self.verbose, desc='Epochs')
         
+        # Training loop
         for epoch in tqdm_epochs:
             self.model.train()
             batch_losses = []
@@ -106,31 +92,27 @@ class Trainer:
                 batch_losses.append(loss.item())
                 
                 update_progress(tqdm_instance=tqdm_epochs, mode='train', section='postfix',
-                                content=[loss, batch_losses, mean_loss_epoch, mean_loss_training, val_loss, mean_loss_val])
-
+                                content=[loss, batch_losses, self.state])
+            
+            # Training metrics
             elapsed_time = time.time() - start_time
-            train_elapsed_time += elapsed_time
             mean_loss_epoch = np.mean(batch_losses)
-            train_losses.append(mean_loss_epoch)
-            mean_loss_training = np.mean(train_losses)
+            self.state.update(epoch=epoch, elapsed_time=elapsed_time, mean_loss_epoch=mean_loss_epoch)   # Update state
             
             # Validation loop
             val_loss = self.evaluate_model(val_loader, show_progress=False)
-            val_losses.append(val_loss)
-            mean_loss_val = np.mean(val_losses)
-            scheduler.step(val_loss)    # Learning rate scheduler step
+            self.scheduler.step(val_loss)    # Learning rate scheduler step
+            self.state.update(val_loss=val_loss)    # Update state
             
             # Tensorboard logging
-            self.tensorboard_logger.log_loss(train_loss=mean_loss_epoch, val_loss=val_loss, epoch=epoch)
+            self.tensorboard_logger.log_loss(self.state)
             self.tensorboard_logger.log_params_grads(model=self.model, epoch=epoch)
             
             # Early stopping
-            if self.early_stopper.should_stop(val_loss, mean_loss_val, mean_loss_epoch, epoch):
+            if self.early_stopper.should_stop(self.state):
                 break
             
         # Save learning data
-        self.train_losses = train_losses
-        self.val_losses = val_losses
         #TODO: save model...
 
     def evaluate_model(self, loader, show_progress=True):
