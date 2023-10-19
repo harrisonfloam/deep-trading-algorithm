@@ -8,6 +8,6 @@ __pycache__/
 
 .env
 
-working/data/*
-working/tensorboard/*
-working/saved_models/*
+checkpoints/model/*
+checkpoints/raytune/*
+logs/tensorboard/*

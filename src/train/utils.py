@@ -98,13 +98,13 @@ class TensorBoardLogger:
         if self.use_tensorboard:
             log_dir = os.path.join(get_project_root(), 'logs/tensorboard')
             tensorboard_cmd = f"tensorboard --logdir={log_dir}"
-            self.writer = SummaryWriter(self.log_dir)
+            self.writer = SummaryWriter(log_dir)
             self.process = subprocess.Popen(tensorboard_cmd.split())
         
     def log_loss(self, state):
         """Log the training loss."""
         if self.use_tensorboard:
-            self.writer.add_scalars({'Training Loss': state.mean_loss_epoch, 'Validation Loss': state.val_loss}, state.epoch)
+            self.writer.add_scalars('Loss', {'Training Loss': state.mean_loss_epoch, 'Validation Loss': state.val_loss}, state.epoch)
         
     def log_params_grads(self, model, epoch):
         """Log model parameters and gradients."""
