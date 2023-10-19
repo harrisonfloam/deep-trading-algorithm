@@ -1,5 +1,5 @@
 """
-Data Processing and Loading for deep-trading-algorithim
+Data processing and loading
 """
 
 # Import Libraries

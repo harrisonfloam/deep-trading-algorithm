@@ -31,16 +31,16 @@ class LSTM(nn.Module):
         )
 
     def forward(self, x):
-        if not self.maintain_state:
-            # Initialize hidden states at each forward pass
-            h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
-            c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
-        else:
-            # Use stored states if they exist, else initialize
-            if self.h0 is None or self.c0 is None:
-                self.h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
-                self.c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
+        current_batch_size = x.size(0)
+        if self.maintain_state:
+            if self.h0 is None or self.c0 is None or self.h0.size(1) != current_batch_size:
+                self.h0 = torch.zeros(self.num_layers, current_batch_size, self.hidden_dim).to(x.device)
+                self.c0 = torch.zeros(self.num_layers, current_batch_size, self.hidden_dim).to(x.device)
+            self.h0, self.c0 = self.h0.to(x.device), self.c0.to(x.device)
             h0, c0 = self.h0, self.c0
+        else:
+            h0 = torch.zeros(self.num_layers, current_batch_size, self.hidden_dim).to(x.device)
+            c0 = torch.zeros(self.num_layers, current_batch_size, self.hidden_dim).to(x.device)
 
         out, (hn, cn) = self.lstm(x, (h0, c0))
 
