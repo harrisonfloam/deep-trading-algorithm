@@ -45,7 +45,7 @@ class Trainer:
     def __del__(self):
         self.tensorboard_logger.stop()
 
-    def train_model(self, train_loader, val_loader, epochs, lr, no_change_patience, overfit_patience, warmup, save_best=False):
+    def train(self, train_loader, val_loader, epochs, lr, no_change_patience, overfit_patience, warmup, save_best=False):
         # Training Parameters
         self.epochs = epochs
         self.lr = lr
@@ -106,7 +106,7 @@ class Trainer:
         # Save learning data
         #TODO: save model...
 
-    def evaluate_model(self, loader, show_progress=True):
+    def evaluate(self, loader, show_progress=True):
         print_to_console(mode='val', model_name=self.model_name, verbose=self.verbose, show_progress=show_progress)
         tqdm_batches = tqdm(loader, disable=not (self.verbose and show_progress))
 
