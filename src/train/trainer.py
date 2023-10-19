@@ -107,13 +107,11 @@ class Trainer:
         #TODO: save model...
 
     def evaluate_model(self, loader, show_progress=True):
-        # Logging
         print_to_console(mode='val', model_name=self.model_name, verbose=self.verbose, show_progress=show_progress)
         tqdm_batches = tqdm(loader, disable=not (self.verbose and show_progress))
 
         self.model.eval()  # Set model to evaluation mode
         total_loss = 0.0
-        start_time = time.time()
         with torch.no_grad():
             for i, (x, y) in enumerate(tqdm_batches):
                 x, y = x.to(self.device), y.to(self.device) # Move tensors to device
@@ -124,8 +122,6 @@ class Trainer:
                 
                 update_progress(tqdm_instance=tqdm_batches, mode='val', section='postfix',
                                 content=[loss, mean_loss_epoch])
-            
-        elapsed_time = time.time() - start_time
 
         mean_loss = total_loss / len(loader)
 
