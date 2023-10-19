@@ -11,11 +11,13 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchinfo import summary
 from tqdm.autonotebook import tqdm
 
+# Import Modules
+from src.train.utils import plot_data, plot_learning_curves, start_tensorboard, stop_tensorboard, save_model, load_model
+from src.utils import print_to_console, update_progress
+
 from train.utils import EarlyStopping
 
 
-# TODO: 1. Move plotting functions to a separate utility module like /src/utils/plotting.py.
-# TODO: 2. Move the predict function to a separate module like /predict/predictor.py.
 # TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
 # TODO: 4. Pass a configuration dictionary or object to the Trainer constructor to simplify parameter management.
 # TODO: 5. Add docstrings to explain the purpose and functionality of each method.
@@ -60,8 +62,7 @@ class Trainer:
         self.train_loader = train_loader
         self.val_loader = val_loader
 
-        if self.verbose:
-            print(f'Training --------- Model: {self.model_name}')
+        print_to_console(verbose=self.verbose, mode='train', model_name=self.model_name)
             
         if self.use_tensorboard:
             self.tensorboard_process = self.start_tensorboard()
@@ -84,12 +85,12 @@ class Trainer:
             start_time = time.time()
 
             for i, (x, y) in enumerate(train_loader):
-                tqdm_epochs.set_description_str(desc=f"Batch [{i+1}/{len(train_loader)}]\t")
+                update_progress(tqdm_instance=tqdm_epochs, mode='train', section='desc', content=[i, train_loader])
                 
                 x, y = x.to(self.device), y.to(self.device)
 
                 # Forward pass
-                outputs = self.model(x).squeeze()  # Remove extra dimension from model's output
+                outputs = self.model(x).squeeze()  # Remove extra dimension from model's output TODO: see if i should just do this in forward
                 loss = self.criterion(outputs, y)
 
                 # Backward pass and optimize
@@ -98,12 +99,8 @@ class Trainer:
                 self.optimizer.step()
                 batch_losses.append(loss.item())
                 
-                postfix_str = (
-                    f"Batch Loss: {loss.item():.4g} ({np.mean(batch_losses):.4g})\t"
-                    f"Loss: {mean_loss_epoch:.4g} ({mean_loss_training:.4g})\t"
-                    f"Val Loss: {val_loss:.4g} ({mean_loss_val:.4g})"
-                )
-                tqdm_epochs.set_postfix_str(postfix_str)
+                update_progress(tqdm_instance=tqdm_epochs, mode='train', section='postfix',
+                                content=[loss, batch_losses, mean_loss_epoch, mean_loss_training, val_loss, mean_loss_val])
 
             elapsed_time = time.time() - start_time
             train_elapsed_time += elapsed_time
@@ -112,14 +109,14 @@ class Trainer:
             mean_loss_training = np.mean(train_losses)
             
             # Validation loop
-            val_loss = self.evaluate_model(val_loader)
+            val_loss = self.evaluate_model(val_loader, show_progress=False)
             val_losses.append(val_loss)
             mean_loss_val = np.mean(val_losses)
             scheduler.step(val_loss)    # Learning rate scheduler step
             
             if self.use_tensorboard:
                 # Log scalar values - TensorBoard
-                self.writer.add_scalar('Training Loss', mean_loss_epoch, epoch)
+                self.writer.add_scalar('Training Loss', mean_loss_epoch, epoch) #BUG
                 self.writer.add_scalar('Validation Loss', val_loss, epoch)
                 
                 # Log model parameters and gradients - TensorBoard
@@ -141,34 +138,27 @@ class Trainer:
         if self.use_tensorboard:
             self.writer.close()
 
-    def evaluate_model(self, loader):
+    def evaluate_model(self, loader, show_progress=True):
+        # Logging
+        print_to_console(mode='val', model_name=self.model_name, verbose=self.verbose, show_progress=show_progress)
+        tqdm_batches = tqdm(loader, disable=not (self.verbose and show_progress))
+
         self.model.eval()  # Set model to evaluation mode
-        start_time = time.time()
-
-        # if self.verbose:
-            # print(f'Evaluating {set_name} Set --------- Model: {self.model_name}')
-        
-        # t = tqdm(loader, disable=not self.verbose)    # Progress bar
-
         total_loss = 0.0
+        start_time = time.time()
         with torch.no_grad():
-            for i, (x, y) in enumerate(loader):
-                x, y = x.to(self.device), y.to(self.device)
-
+            for i, (x, y) in enumerate(tqdm_batches):
+                x, y = x.to(self.device), y.to(self.device) # Move tensors to device
                 outputs = self.model(x).squeeze()  # Forward pass
-
                 loss = self.criterion(outputs, y)  # Compute loss
-
                 total_loss += loss.item()
+                mean_loss_epoch = total_loss/(i + 1)
                 
-                # if self.verbose:
-                #     t.set_description(f'[{i+1}/{len(loader)}] Loss: {total_loss/(i+1):.4f}')
+                update_progress(tqdm_instance=tqdm_batches, mode='val', section='postfix',
+                                content=[loss, mean_loss_epoch])
             
         elapsed_time = time.time() - start_time
 
         mean_loss = total_loss / len(loader)
-
-        # if self.verbose:
-        #     t.set_description(f'Loss: {mean_loss:.4f}, Time Elapsed: {elapsed_time:.2f}s')
 
         return mean_loss

@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 import subprocess
+from tqdm.autonotebook import tqdm
 
 # Import Modules
 from src.utils import get_project_root
