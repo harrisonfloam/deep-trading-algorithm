@@ -12,10 +12,8 @@ from torchinfo import summary
 from tqdm.autonotebook import tqdm
 
 # Import Modules
-from src.train.utils import plot_data, plot_learning_curves, save_model, load_model
+from src.train.utils import EarlyStopping, TensorBoardLogger, TrainingState, plot_data, plot_learning_curves, save_model, load_model
 from src.utils import print_to_console, update_progress
-
-from train.utils import EarlyStopping, TensorBoardLogger, TrainingState
 
 
 class Trainer:
@@ -102,7 +100,8 @@ class Trainer:
             # Early stopping and model saving
             stop, new_best = self.early_stopper.should_stop(self.state)
             if new_best:
-                save_model(model=self.model, filename=self.model_name)            
+                if save_best:
+                    save_model(model=self.model, filename=self.model_name)            
             if stop:
                 break
 
