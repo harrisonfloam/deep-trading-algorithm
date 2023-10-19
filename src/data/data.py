@@ -103,42 +103,37 @@ class DataProcessor:
         self.databundle = databundle
         
     def create_dataloaders(self, window, batch_size, exclude_input_columns):
-        train, test, val = self.databundle.get_bundle()
-        train_loader = TimeSeriesDataLoader(df=train, window=window, 
-                                            batch_size=batch_size, 
-                                            exclude_input_columns=exclude_input_columns).create_dataloader()
-        val_loader = TimeSeriesDataLoader(df=val, window=window, 
-                                          batch_size=batch_size, 
-                                          exclude_input_columns=exclude_input_columns).create_dataloader()
-        test_loader = TimeSeriesDataLoader(df=test, window=window, 
-                                           batch_size=batch_size, 
-                                           exclude_input_columns=exclude_input_columns).create_dataloader()
-        return train_loader, val_loader, test_loader
+        loaders = {}
+        for subset in self.databundle.get_bundle():
+            loader = TimeSeriesDataLoader(df=subset, window=window, batch_size=batch_size, 
+                                            exclude_input_columns=exclude_input_columns)
+            loaders[subset] = loader
+        return loaders['train'], loaders['test'], loaders['val']
 
+    
 class TimeSeriesDataset(Dataset):
     def __init__(self, df, window, exclude_input_columns):
-        self.df = df
         self.window = window
-        self.exclude_input_columns = exclude_input_columns
-
+        self.exclude_input_columns = [col for col in exclude_input_columns if col in df.columns]
+        self.input_df = df.drop(columns=self.exclude_input_columns)
+        self.target_series = df['percent_ret']
+        
     def __len__(self):
-        return len(self.df) - self.window
+        return len(self.input_df) - self.window
 
     def __getitem__(self, idx):
-        drop_columns = [col for col in self.exclude_input_columns if col in self.df.columns]
-        x_df = self.df.iloc[idx : idx + self.window].drop(columns=drop_columns)
-        x = x_df.values
-        y = self.df.iloc[idx + self.window]['percent_ret']  # Percent return at the next timestep
+        x = self.input_df.iloc[idx : idx + self.window].values
+        y = self.target_series.iloc[idx + self.window]
         return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
+
     
-class TimeSeriesDataLoader:
+class TimeSeriesDataLoader(DataLoader):  # Inherits from DataLoader
     def __init__(self, df, window, batch_size, exclude_input_columns=['']):
         self.df = df
         self.window = window
         self.batch_size = batch_size
         self.exclude_input_columns = exclude_input_columns
-        self.dataset = TimeSeriesDataset(df=self.df, window=self.window, exclude_input_columns=self.exclude_input_columns)
-
-    def create_dataloader(self):
-        dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=False)
-        return dataloader
+        dataset = TimeSeriesDataset(df=self.df, window=self.window, exclude_input_columns=self.exclude_input_columns)
+        
+        # Initialize the DataLoader with the dataset
+        super(TimeSeriesDataLoader, self).__init__(dataset, batch_size=self.batch_size, shuffle=False)
