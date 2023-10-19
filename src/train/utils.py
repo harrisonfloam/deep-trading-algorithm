@@ -5,7 +5,6 @@ Utility functions for training
 # Import Libraries
 import os
 import torch
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter

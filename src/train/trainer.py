@@ -13,7 +13,7 @@ from tqdm.autonotebook import tqdm
 
 # Import Modules
 from src.train.utils import plot_data, plot_learning_curves, start_tensorboard, stop_tensorboard, save_model, load_model
-from src.utils import update_progress
+from src.utils import print_to_console, update_progress
 
 
 # TODO: 3. Consider encapsulating TensorBoard logic into its own class or module.
@@ -60,8 +60,7 @@ class Trainer:
         self.train_loader = train_loader
         # self.val_loader = val_loader
 
-        if self.verbose:
-            print(f'Training --------- Model: {self.model_name}')
+        print_to_console(verbose=self.verbose, mode='train', model_name=self.model_name)
             
         if self.use_tensorboard:
             self.tensorboard_process = self.start_tensorboard()
@@ -92,7 +91,7 @@ class Trainer:
                 x, y = x.to(self.device), y.to(self.device)
 
                 # Forward pass
-                outputs = self.model(x).squeeze()  # Remove extra dimension from model's output
+                outputs = self.model(x).squeeze()  # Remove extra dimension from model's output TODO: see if i should just do this in forward
                 loss = self.criterion(outputs, y)
 
                 # Backward pass and optimize
@@ -157,18 +156,17 @@ class Trainer:
         if self.use_tensorboard:
             self.writer.close()
 
-    def evaluate_model(self, loader):
+    def evaluate_model(self, loader, show_progress=True):
         self.model.eval()  # Set model to evaluation mode
         start_time = time.time()
 
-        # if self.verbose:
-            # print(f'Evaluating {set_name} Set --------- Model: {self.model_name}')
+        print_to_console(verbose=True, mode='val', model_name=self.model_name)
         
-        # t = tqdm(loader, disable=not self.verbose)    # Progress bar
+        tqdm_batches = tqdm(loader, disable=not (self.verbose and show_progress))    # Progress bar
 
         total_loss = 0.0
         with torch.no_grad():
-            for i, (x, y) in enumerate(loader):
+            for i, (x, y) in enumerate(tqdm_batches):
                 x, y = x.to(self.device), y.to(self.device)
 
                 outputs = self.model(x).squeeze()  # Forward pass
@@ -176,9 +174,10 @@ class Trainer:
                 loss = self.criterion(outputs, y)  # Compute loss
 
                 total_loss += loss.item()
+                mean_loss_epoch = total_loss/(i + 1)
                 
-                # if self.verbose:
-                #     t.set_description(f'[{i+1}/{len(loader)}] Loss: {total_loss/(i+1):.4f}')
+                update_progress(tqdm_instance=tqdm_batches, mode='val', section='postfix',
+                                content=[loss, mean_loss_epoch])
             
         elapsed_time = time.time() - start_time
 
