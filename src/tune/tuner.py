@@ -20,7 +20,8 @@ class Tuner:
         self.algo = algo
 
     def tune_model(self):
-        ray.init(ignore_reinit_error=True, include_dashboard=True)
+        #TODO: need to do ray -start --head in console first?
+        ray.init(ignore_reinit_error=True)  #, include_dashboard=True
         analysis = tune.run(
             self.objective_func,
             config=self.search_space,

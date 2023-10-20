@@ -6,6 +6,7 @@ Tuning script
 import ray
 from ray import tune, train
 from ray.tune.search.optuna import OptunaSearch
+from functools import partial
 
 # Import Modules
 from src.data.data import DataProcessor
@@ -14,14 +15,10 @@ from src.train.trainer import Trainer
 from src.tune.tuner import Tuner
 from src.utils import google_colab_handler
 
-# Global variable
-data_processor = None
 
-def objective(config):
+def objective(config, data_processor):
     # Handle Google Colab and TPU settings
     running_in_colab, use_TPU, path, device = google_colab_handler(use_TPU=False, verbose=False)
-
-    global data_processor
     
     # Create dataloaders
     train_loader, val_loader, _ = data_processor.create_dataloaders(window=config['window'], 
@@ -66,13 +63,13 @@ def objective(config):
     tune.report({'val_loss': last_val_loss})
     
 def prepare_data():
-    global data_processor
     data_processor = DataProcessor(start='2021-03-30 00:00:00', 
                                 end='2021-03-31 00:00:00', 
                                 verbose=False)
     data_processor.prepare_data(filename='bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv', 
                                 exclude_columns_detrend=['SMA', 'RSI', 'MACD', 'log_ret', 'percent_ret'],
                                 exclude_columns_scale=[''])
+    return data_processor
 
 search_space = {
     "lr": tune.loguniform(1e-4, 1e-2),
@@ -89,7 +86,9 @@ search_space = {
 algo = OptunaSearch()
 
 def tune():
-    tuner = Tuner(objective_func=objective,
+    data_processor = prepare_data()
+    objective_func = partial(objective, data_processor)
+    tuner = Tuner(objective_func=objective_func,
                   search_space=search_space,
                   algo=algo)
     tuner.tune_model()
