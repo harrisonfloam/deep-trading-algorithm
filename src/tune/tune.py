@@ -51,10 +51,10 @@ def objective(config, data_processor):
     # Train model
     trainer.train(train_loader=train_loader,
                 val_loader=val_loader,
-                epochs=30,  # Keeping epochs same as in old code
+                epochs=30,
                 lr=config['lr'],
                 no_change_patience=config['no_change_patience'],
-                overfit_patience=100,  # Keeping overfit_patience same as in old code
+                overfit_patience=100,
                 warmup=config['warmup'],
                 save_best=False)
 
