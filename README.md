@@ -6,7 +6,7 @@ A Python project that explores deep learning methods for financial forecasting a
 
 ## Outline
 
-- - [`archive`](https://github.com/harrisonfloam/deep-trading-algorithm/tree/main/archive): archived files from previous iterations
+- [`archive`](https://github.com/harrisonfloam/deep-trading-algorithm/tree/main/archive): archived files from previous iterations
 - [`checkpoints`](https://github.com/harrisonfloam/deep-trading-algorithm/tree/main/checkpoints): model weights and raytune checkpoints
 - [`config`](https://github.com/harrisonfloam/deep-trading-algorithm/tree/main/config): environment and other configs
 - [`data`](https://github.com/harrisonfloam/deep-trading-algorithm/tree/main/data): source data .csv's
