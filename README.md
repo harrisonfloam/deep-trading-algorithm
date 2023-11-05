@@ -22,7 +22,8 @@ A Python project that explores deep learning methods for financial forecasting a
 
 ## Planned Features
 
-- Classification, regression, and ensemble models
+- Classification and regression applications
+- LSTM, GRU, and Transformer architectures
 - Training with Tensorboard
 - Tuning with RayTune
 - Attribution visualization
