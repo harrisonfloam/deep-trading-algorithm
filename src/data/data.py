@@ -26,6 +26,7 @@ class DataProcessor:
         self.verbose = verbose
 
     def load_data(self, filename):
+        download_data(filename) # Download data if needed
         self.path = os.path.join(get_project_root(), 'data', filename)    # Filepath of data
         data = pd.read_csv(self.path)
         databundle = DataBundle(data=data)
