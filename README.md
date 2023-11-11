@@ -43,3 +43,13 @@ Create a conda environment and activate it.
 conda env create -f config/environment.yml
 conda activate time-series
 ```
+
+Update it if any packages are added:
+```
+conda env export --no-builds > environment.yml
+```
+
+To enable module importing with the repo, run:
+```
+pip install -e .
+```
