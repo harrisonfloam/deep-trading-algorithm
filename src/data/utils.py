@@ -86,4 +86,3 @@ def unscale_data(scaled_df, databundle):
     unscaled_df = scaled_df.copy()
     unscaled_df['percent_ret'] = unscaled_percent_ret.flatten()
     return unscaled_df
-    

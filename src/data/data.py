@@ -9,6 +9,7 @@ import os
 import torch
 from torch.utils.data import Dataset, DataLoader
 import pandas_ta as ta
+from kaggle.api.kaggle_api_extended import KaggleApi
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, QuantileTransformer, RobustScaler, StandardScaler
 from sklearn.linear_model import LinearRegression
@@ -133,3 +134,14 @@ class TimeSeriesDataLoader(DataLoader):  # Inherits from DataLoader
     def __init__(self, df, window, batch_size, exclude_input_columns=['']):
         dataset = TimeSeriesDataset(df=df, window=window, exclude_input_columns=exclude_input_columns)
         super(TimeSeriesDataLoader, self).__init__(dataset, batch_size=batch_size, shuffle=False)
+
+def download_data(dataset_name, dir='data'):
+    # Initialize Kaggle API
+    api = KaggleApi()
+    api.authenticate()
+    
+    # Download data
+    filepath = os.path.join(get_project_root(), dir)
+    if not os.path.exists(filepath):
+        api.dataset_download_files(dataset_name, path=filepath, unzip=True)
+    
