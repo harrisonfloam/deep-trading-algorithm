@@ -24,6 +24,7 @@ A Python project that explores deep learning methods for financial forecasting a
 
 - Classification and regression applications
 - LSTM, GRU, and Transformer architectures
+- Transfer learning
 - Training with Tensorboard
 - Tuning with RayTune
 - Attribution visualization
