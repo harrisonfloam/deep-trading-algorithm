@@ -92,14 +92,16 @@ class DataProcessor:
                 subset[col] = subset[col].values - trend
         databundle.update(train=train, test=test, val=val)
 
-    def prepare_data(self, filename, exclude_columns_detrend, exclude_columns_scale):
+    def prepare_data(self, filename, exclude_columns_detrend=None, exclude_columns_scale=None, do_detrend=True, do_scale=True):
         databundle = self.load_data(filename)
         self.clean_data(databundle)
         self.add_features(databundle)
         self.trim_data(databundle)
         self.split_data(databundle)
-        self.detrend_data(databundle=databundle, exclude_columns=exclude_columns_detrend)
-        self.scale_data(databundle=databundle, exclude_columns=exclude_columns_scale)
+        if do_detrend:
+            self.detrend_data(databundle=databundle, exclude_columns=exclude_columns_detrend)
+        if do_scale:
+            self.scale_data(databundle=databundle, exclude_columns=exclude_columns_scale)
         self.databundle = databundle
         
     def create_dataloaders(self, window, batch_size, exclude_input_columns):

@@ -37,8 +37,8 @@ def to_datetime_index(df, index_col):
 def forward_backward_fill(df):
     """Forward, then backward fills NA's in a dataframe
     """
-    df.fillna(method="ffill", inplace=True)   # Forward/backward fill prices
-    df.fillna(method="bfill", inplace=True)
+    df.ffill(inplace=True)   # Forward/backward fill prices
+    df.bfill(inplace=True)
     return df
 
 def train_test_val_split(input, test_percent, val_percent):
